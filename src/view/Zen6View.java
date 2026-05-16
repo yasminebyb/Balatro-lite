@@ -1,15 +1,26 @@
 package view;
 
 import java.awt.Color;
-import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.FloatControl;
+import javax.imageio.ImageIO;
 
 import com.github.forax.zen.Application;
 import com.github.forax.zen.ApplicationContext;
 import com.github.forax.zen.PointerEvent;
 
 import domain.Card;
+import domain.Rank;
+import domain.Suit;
 import model.GameState;
 
 public class Zen6View implements View {
@@ -20,15 +31,81 @@ public class Zen6View implements View {
 
 	private final List<Integer> selectedCards;
 
+	private final Map<String, BufferedImage> cardImages;
+
 	private ApplicationContext context;
 
 	private String currentMessage = "";
-	
+
 	private Color messageColor = Color.WHITE;
+
+	private BufferedImage background;
+
+	private Clip musicClip;
 
 	public Zen6View() {
 
 		this.selectedCards = new ArrayList<>();
+
+		this.cardImages = new HashMap<>();
+
+		try (InputStream input = Zen6View.class.getResourceAsStream("/background.png")) {
+
+			background = ImageIO.read(input);
+
+		} catch (Exception e) {
+
+			throw new RuntimeException(e);
+		}
+
+		try {
+
+			InputStream input = Zen6View.class.getResourceAsStream("/music/ambience.wav");
+
+			AudioInputStream audio = AudioSystem.getAudioInputStream(input);
+
+			musicClip = AudioSystem.getClip();
+
+			musicClip.open(audio);
+
+			musicClip.loop(Clip.LOOP_CONTINUOUSLY);
+
+			FloatControl gainControl = (FloatControl) musicClip.getControl(FloatControl.Type.MASTER_GAIN);
+
+			gainControl.setValue(-20.0f);
+
+			musicClip.start();
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+		}
+
+		try {
+
+			for (Rank rank : Rank.values()) {
+
+				for (Suit suit : Suit.values()) {
+
+					String key = rank.name() + "_" + suit.name();
+
+					String path = "/cards/" + key + ".png";
+
+					InputStream input = Zen6View.class.getResourceAsStream(path);
+
+					if (input != null) {
+
+						BufferedImage image = ImageIO.read(input);
+
+						cardImages.put(key, image);
+					}
+				}
+			}
+
+		} catch (Exception e) {
+
+			throw new RuntimeException(e);
+		}
 
 		Application.run(Color.BLACK, context -> {
 
@@ -41,20 +118,20 @@ public class Zen6View implements View {
 	@Override
 	public void showMessage(String message) {
 
-	    this.currentMessage = message;
+		this.currentMessage = message;
 
-	    this.messageColor = Color.WHITE;
+		this.messageColor = Color.WHITE;
 
-	    render();
+		render();
 	}
-	
+
 	public void showLoseMessage(String message) {
 
-	    this.currentMessage = message;
+		this.currentMessage = message;
 
-	    this.messageColor = Color.RED;
+		this.messageColor = Color.RED;
 
-	    render();
+		render();
 	}
 
 	@Override
@@ -111,12 +188,26 @@ public class Zen6View implements View {
 			return;
 		}
 
+		var screenInfo = context.getScreenInfo();
+
+		float screenWidth = screenInfo.width();
+		float screenHeight = screenInfo.height();
+
+		int cardWidth = 120;
+		int cardHeight = 160;
+		int spacing = 140;
+
+		int totalWidth = currentCards.size() * spacing;
+
+		int startX = (int) (screenWidth / 2 - totalWidth / 2);
+
+		int y = (int) (screenHeight - cardHeight - 40);
+
 		for (int i = 0; i < currentCards.size(); i++) {
 
-			int x = 50 + i * 100;
-			int y = 300;
+			int x = startX + i * spacing;
 
-			boolean inside = mouseX >= x && mouseX <= x + 80 && mouseY >= y && mouseY <= y + 120;
+			boolean inside = mouseX >= x && mouseX <= x + cardWidth && mouseY >= y && mouseY <= y + cardHeight;
 
 			if (inside) {
 
@@ -144,63 +235,100 @@ public class Zen6View implements View {
 
 		context.renderFrame(graphics -> {
 
-			graphics.setColor(Color.BLACK);
+			var screenInfo = context.getScreenInfo();
 
-			graphics.fillRect(
-			    0,
-			    0,
-			    context.getScreenInfo().width(),
-			    context.getScreenInfo().height()
-			);
-			
+			float screenWidth = screenInfo.width();
+			float screenHeight = screenInfo.height();
+
+			graphics.drawImage(background, 0, 0, (int) screenWidth, (int) screenHeight, null);
+
+			graphics.setColor(new Color(0, 0, 0, 120));
+
+			graphics.fillRect(0, 0, (int) screenWidth, (int) screenHeight);
+
 			graphics.setColor(Color.WHITE);
 
-			graphics.drawString("BALATRI", 50, 50);
+			graphics.drawString("BALATRI", screenWidth / 2 - 60, 60);
 
 			if (currentState != null) {
 
 				graphics.drawString("Score : " + currentState.getCurrentScore() + " / "
-						+ currentState.getCurrentBlind().targetScore(), 50, 100);
+						+ currentState.getCurrentBlind().targetScore(), screenWidth / 2 - 120, 120);
 
-				graphics.drawString("Mains restantes : " + currentState.getHandsRemaining(), 50, 130);
+				graphics.drawString("Mains restantes : " + currentState.getHandsRemaining(), screenWidth / 2 - 120,
+						150);
 			}
 
 			if (!currentMessage.isEmpty()) {
 
-			    graphics.setColor(messageColor);
+				graphics.setColor(messageColor);
 
-			    graphics.drawString(
-			        currentMessage,
-			        50,
-			        180
-			    );
+				graphics.drawString(currentMessage, screenWidth / 2 - 120, 220);
 
-			    graphics.setColor(Color.WHITE);
+				graphics.setColor(Color.WHITE);
 			}
-			
+
 			if (currentCards != null) {
+
+				int cardWidth = 120;
+				int cardHeight = 160;
+				int spacing = 140;
+
+				int totalWidth = currentCards.size() * spacing;
+
+				int startX = (int) (screenWidth / 2 - totalWidth / 2);
+
+				int y = (int) (screenHeight - cardHeight - 40);
 
 				for (int i = 0; i < currentCards.size(); i++) {
 
 					Card card = currentCards.get(i);
 
-					int x = 50 + i * 100;
-					int y = 300;
+					int x = startX + i * spacing;
 
-					if (selectedCards.contains(i)) {
+					String key = card.rank().name() + "_" + card.suit().name();
 
-						graphics.setColor(Color.GREEN);
+					BufferedImage image = cardImages.get(key);
+
+					if (image != null) {
+
+						graphics.drawImage(image, x, y, cardWidth, cardHeight, null);
+
+						if (selectedCards.contains(i)) {
+
+							graphics.setColor(Color.GREEN);
+
+							graphics.drawRect(x, y, cardWidth, cardHeight);
+						}
 
 					} else {
 
 						graphics.setColor(Color.WHITE);
+
+						graphics.fillRect(x, y, cardWidth, cardHeight);
+
+						if (selectedCards.contains(i)) {
+
+							graphics.setColor(Color.GREEN);
+
+						} else {
+
+							graphics.setColor(Color.BLACK);
+						}
+
+						graphics.drawRect(x, y, cardWidth, cardHeight);
+
+						if (card.suit().toString().equals("♥") || card.suit().toString().equals("♦")) {
+
+							graphics.setColor(Color.RED);
+
+						} else {
+
+							graphics.setColor(Color.BLACK);
+						}
+
+						graphics.drawString(card.toString(), x + 10, y + 20);
 					}
-
-					graphics.drawRect(x, y, 80, 120);
-
-					graphics.drawString(card.toString(), x + 20, y + 60);
-
-					graphics.setColor(Color.WHITE);
 				}
 			}
 		});
