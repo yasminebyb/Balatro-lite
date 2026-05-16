@@ -1,5 +1,6 @@
 package app;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Scanner;
 
@@ -24,20 +25,27 @@ public class Main {
 		var choice = scanner.nextInt();
 
 		View view;
+		try {
+			switch (choice) {
 
-		switch (choice) {
+			case 1 -> view = new ConsoleView();
 
-		case 1 -> view = new ConsoleView();
+			case 2 -> view = new Zen6View();
 
-		case 2 -> view = new Zen6View();
+			default -> {
+				System.out.println("Choix invalide.");
+				scanner.close();
+				return;
+			}
+			}
 
-		default -> {
-			System.out.println("Choix invalide.");
+		} catch (IOException e) {
+
+			System.err.println(e.getMessage());
 			scanner.close();
+			System.exit(1);
 			return;
 		}
-		}
-
 		List<Blind> blinds = List.of(new StandardBlind("Petit aveugle", 300), new StandardBlind("Grand aveugle", 800),
 				new StandardBlind("Boss", 2000));
 

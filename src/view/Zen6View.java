@@ -2,6 +2,7 @@ package view;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,6 +13,8 @@ import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.FloatControl;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.imageio.ImageIO;
 
 import com.github.forax.zen.Application;
@@ -43,7 +46,7 @@ public class Zen6View implements View {
 
 	private Clip musicClip;
 
-	public Zen6View() {
+	public Zen6View() throws IOException, UnsupportedAudioFileException, LineUnavailableException {
 
 		this.selectedCards = new ArrayList<>();
 
@@ -53,16 +56,10 @@ public class Zen6View implements View {
 
 			background = ImageIO.read(input);
 
-		} catch (Exception e) {
-
-			throw new RuntimeException(e);
 		}
 
-		try {
-
-			InputStream input = Zen6View.class.getResourceAsStream("/music/ambience.wav");
-
-			AudioInputStream audio = AudioSystem.getAudioInputStream(input);
+		try (InputStream input = Zen6View.class.getResourceAsStream("/music/ambience.wav");
+				AudioInputStream audio = AudioSystem.getAudioInputStream(input)) {
 
 			musicClip = AudioSystem.getClip();
 
@@ -75,23 +72,17 @@ public class Zen6View implements View {
 			gainControl.setValue(-20.0f);
 
 			musicClip.start();
-
-		} catch (Exception e) {
-
-			e.printStackTrace();
 		}
 
-		try {
+		for (Rank rank : Rank.values()) {
 
-			for (Rank rank : Rank.values()) {
+			for (Suit suit : Suit.values()) {
 
-				for (Suit suit : Suit.values()) {
+				String key = rank.name() + "_" + suit.name();
 
-					String key = rank.name() + "_" + suit.name();
+				String path = "/cards/" + key + ".png";
 
-					String path = "/cards/" + key + ".png";
-
-					InputStream input = Zen6View.class.getResourceAsStream(path);
+				try (InputStream input = Zen6View.class.getResourceAsStream(path)) {
 
 					if (input != null) {
 
@@ -101,10 +92,6 @@ public class Zen6View implements View {
 					}
 				}
 			}
-
-		} catch (Exception e) {
-
-			throw new RuntimeException(e);
 		}
 
 		Application.run(Color.BLACK, context -> {
