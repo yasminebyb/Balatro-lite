@@ -19,6 +19,7 @@ import javax.imageio.ImageIO;
 
 import com.github.forax.zen.Application;
 import com.github.forax.zen.ApplicationContext;
+import com.github.forax.zen.KeyboardEvent;
 import com.github.forax.zen.PointerEvent;
 
 import domain.Card;
@@ -128,7 +129,7 @@ public class Zen6View implements View {
 
 		render();
 	}
- 
+
 	@Override
 	public void showCards(List<Card> cards) {
 
@@ -154,6 +155,15 @@ public class Zen6View implements View {
 				continue;
 			}
 
+			if (event instanceof KeyboardEvent keyboardEvent) {
+
+				if (keyboardEvent.action() == KeyboardEvent.Action.KEY_PRESSED
+						&& keyboardEvent.key() == KeyboardEvent.Key.ESCAPE) {
+
+					System.exit(0);
+				}
+			}
+			
 			if (event instanceof PointerEvent pointerEvent) {
 
 				if (pointerEvent.action() == PointerEvent.Action.POINTER_DOWN) {

@@ -19,45 +19,60 @@ public class Main {
 
 	public static void main(String[] args) {
 
-		Scanner scanner = new Scanner(System.in);
+	    Scanner scanner = new Scanner(System.in);
 
-		IO.println("=== BALATRI ===");
-		IO.println("1 - Console");
-		IO.println("2 - Interface graphique");
+	    IO.println("=== BALATRI ===");
+	    IO.println("1 - Console");
+	    IO.println("2 - Interface graphique");
+	    IO.println("q - Pour quitter a tout moment");
 
-		var choice = scanner.nextInt();
+	    String choice = scanner.nextLine().trim();
 
-		View view;
-		try {
-			switch (choice) {
+	    if (choice.equalsIgnoreCase("q")) {
 
-			case 1 -> view = new ConsoleView();
+	        IO.println("Fermeture du jeu.");
+	        scanner.close();
+	        return;
+	    }
 
-			case 2 -> view = new Zen6View();
+	    View view;
 
-			default -> {
-				System.out.println("Choix invalide.");
-				scanner.close();
-				return;
-			}
-			}
+	    try {
 
-		} catch (IOException | UnsupportedAudioFileException | LineUnavailableException e) {
+	        switch (choice) {
 
-			System.err.println(e.getMessage());
-			scanner.close();
-			System.exit(1);
-			return;
-		}
-		
-		List<Blind> blinds = List.of(new StandardBlind("Petit aveugle", 300), new StandardBlind("Grand aveugle", 800),
-				new StandardBlind("Boss", 2000));
+	        case "1" -> view = new ConsoleView();
 
-		var state = new GameState(blinds, 4);
+	        case "2" -> view = new Zen6View();
 
-		var controller = new GameController(state, view);
+	        default -> {
+	            System.out.println("Choix invalide.");
+	            scanner.close();
+	            return;
+	        }
+	        }
 
-		controller.run();
-		scanner.close();
+	    } catch (IOException
+	            | UnsupportedAudioFileException
+	            | LineUnavailableException e) {
+
+	        System.err.println(e.getMessage());
+	        scanner.close();
+	        System.exit(1);
+	        return;
+	    }
+
+	    List<Blind> blinds = List.of(
+	            new StandardBlind("Petit aveugle", 300),
+	            new StandardBlind("Grand aveugle", 800),
+	            new StandardBlind("Boss", 2000));
+
+	    var state = new GameState(blinds, 4);
+
+	    var controller = new GameController(state, view);
+
+	    controller.run();
+
+	    scanner.close();
 	}
 }

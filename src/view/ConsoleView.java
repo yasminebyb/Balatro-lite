@@ -43,6 +43,13 @@ public class ConsoleView implements View {
 			IO.println("Choisis 5 cartes (ex: 0 1 2 3 4) :");
 
 			String line = scanner.nextLine().trim();
+			
+			if (line.equalsIgnoreCase("q")) {
+
+			    IO.println("Partie quittée.");
+			    scanner.close();
+			    System.exit(0);
+			}
 
 			String[] parts = line.split("\\s+");
 
