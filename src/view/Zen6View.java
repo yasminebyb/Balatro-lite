@@ -128,7 +128,7 @@ public class Zen6View implements View {
 
 		render();
 	}
-
+ 
 	@Override
 	public void showCards(List<Card> cards) {
 

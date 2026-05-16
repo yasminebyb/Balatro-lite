@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Scanner;
 
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
+
 import controller.GameController;
 import domain.Blind;
 import domain.StandardBlind;
@@ -39,13 +42,14 @@ public class Main {
 			}
 			}
 
-		} catch (IOException e) {
+		} catch (IOException | UnsupportedAudioFileException | LineUnavailableException e) {
 
 			System.err.println(e.getMessage());
 			scanner.close();
 			System.exit(1);
 			return;
 		}
+		
 		List<Blind> blinds = List.of(new StandardBlind("Petit aveugle", 300), new StandardBlind("Grand aveugle", 800),
 				new StandardBlind("Boss", 2000));
 
