@@ -1,51 +1,88 @@
 package view;
 
-import java.util.List;
-
 import domain.Card;
+import domain.Hand;
+import domain.Planet;
 import model.GameState;
 
+import java.util.List;
+
 /**
- * Représente une vue du jeu Balatri.
+ * Contrat d'affichage du jeu Balatri.
  * <p>
- * Une vue est responsable de l'interaction avec le joueur :
- * affichage des informations, des cartes et récupération
- * des choix utilisateur.
+ * Toute vue (console, graphique) doit implémenter cette interface.
+ * {@code GameController} ne dépend que de cette abstraction —
+ * il ne sait pas si l'affichage se fait en console ou avec Zen6.
  * </p>
- * <p>
- * Plusieurs implémentations sont possibles :
- * console et interface graphique Zen6.
- * </p>
+ *
+ * @see ConsoleView
  */
 public interface View {
 
-	/**
-	 * Permet d'afficher un message sur la vue pour l'utilisateur.
-	 *
-	 * @param message le message à afficher
-	 */
-    void showMessage(String message);
+    /**
+     * Affiche les cartes piochées au joueur.
+     *
+     * @param cards les cartes piochées, non null
+     * @throws NullPointerException si {@code cards} est null
+     */
+    void showHand(List<Card> cards);
+
+    /**
+     * Demande au joueur de sélectionner 5 cartes parmi les 8 affichées.
+     * Retourne les indices des cartes choisies (base 0).
+     *
+     * @param cards les cartes disponibles, non null et non vide
+     * @return liste de 5 indices choisis par le joueur
+     * @throws NullPointerException     si {@code cards} est null
+     * @throws IllegalArgumentException si {@code cards} est vide
+     */
+    List<Integer> askCardSelection(List<Card> cards);
+
+    /**
+     * Affiche la combinaison détectée et le score de la main jouée.
+     *
+     * @param hand  la main jouée, non null
+     * @param score le score calculé, positif ou nul
+     * @throws NullPointerException     si {@code hand} est null
+     * @throws IllegalArgumentException si {@code score} est négatif
+     */
+    void showHandResult(Hand hand, int score);
 
     /**
      * Affiche l'état courant de la partie.
      *
-     * @param state l'état courant du jeu, non null
+     * @param state l'état courant, non null
+     * @throws NullPointerException si {@code state} est null
      */
-    void showState(GameState state);
-    
-    /**
-     * Affiche les cartes actuellement disponibles.
-     *
-     * @param cards les cartes à afficher, non null
-     */
-    void showCards(List<Card> cards);
+    void showGameState(GameState state);
 
     /**
-     * Demande au joueur de sélectionner des cartes parmi celles disponibles.
+     * Affiche la planète reçue après un blind battu.
      *
-     * @param cards les cartes disponibles
-     * @return la liste des indices sélectionnés
+     * @param planet la planète obtenue, non null
+     * @param state  l'état courant, non null
+     * @throws NullPointerException si {@code planet} ou {@code state} est null
      */
-    List<Integer> askCardSelection(List<Card> cards);
+    void showPlanetReward(Planet planet, GameState state);
+
+    /**
+     * Affiche un message générique.
+     *
+     * @param message le message à afficher, non null
+     * @throws NullPointerException si {@code message} est null
+     */
+    void showMessage(String message);
+
+    /**
+     * Affiche le message de victoire.
+     * Appelé quand tous les blinds ont été battus.
+     */
+    void showVictory();
+
+    /**
+     * Affiche le message de défaite.
+     * Appelé quand le joueur n'a plus de mains et n'a pas atteint la cible.
+     */
+    void showDefeat();
 
 }
