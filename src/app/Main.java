@@ -4,75 +4,65 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Scanner;
 
-import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.UnsupportedAudioFileException;
-
 import controller.GameController;
 import domain.Blind;
 import domain.StandardBlind;
 import model.GameState;
 import view.ConsoleView;
-import view.View;
 import view.Zen6View;
 
 public class Main {
 
-	public static void main(String[] args) {
+    public static void main(String[] args) {
+        try {
+            lancerJeu();
+        } catch (IOException e) {
+            System.err.println("Erreur : " + e.getMessage());
+            System.exit(1);
+        }
+    }
 
-	    Scanner scanner = new Scanner(System.in);
+    private static void lancerJeu() throws IOException {
+        var blinds = List.<Blind>of(
+            new StandardBlind("Petit aveugle", 50),
+            new StandardBlind("Grand aveugle", 60),
+            new StandardBlind("Boss", 70)
+        );
 
-	    IO.println("=== BALATRI ===");
-	    IO.println("1 - Console");
-	    IO.println("2 - Interface graphique");
-	    IO.println("q - Pour quitter a tout moment");
+        var scanner = new Scanner(System.in);
+        boolean continuer = true;
 
-	    String choice = scanner.nextLine().trim();
+        while (continuer) {
+            var state = new GameState(blinds, 4);
 
-	    if (choice.equalsIgnoreCase("q")) {
+            IO.println("\n=== BALATRI ===");
+            IO.println("1 - Console");
+            IO.println("2 - Interface graphique");
+            IO.println("3 - Quitter");
+            IO.println("Votre choix : "); 
+            
+            int choice = scanner.nextInt();
 
-	        IO.println("Fermeture du jeu.");
-	        scanner.close();
-	        return;
-	    }
-
-	    View view;
-
-	    try {
-
-	        switch (choice) {
-
-	        case "1" -> view = new ConsoleView();
-
-	        case "2" -> view = new Zen6View();
-
-	        default -> {
-	            System.out.println("Choix invalide.");
-	            scanner.close();
-	            return;
-	        }
-	        }
-
-	    } catch (IOException
-	            | UnsupportedAudioFileException
-	            | LineUnavailableException e) {
-
-	        System.err.println(e.getMessage());
-	        scanner.close();
-	        System.exit(1);
-	        return;
-	    }
-
-	    List<Blind> blinds = List.of(
-	            new StandardBlind("Petit aveugle", 300),
-	            new StandardBlind("Grand aveugle", 800),
-	            new StandardBlind("Boss", 2000));
-
-	    var state = new GameState(blinds, 4);
-
-	    var controller = new GameController(state, view);
-
-	    controller.run();
-
-	    scanner.close();
-	}
+            switch (choice) {
+                case 1 -> {
+                    new GameController(state, new ConsoleView()).run();
+                }
+                case 2 -> {
+                    var view       = new Zen6View();
+                    var controller = new GameController(state, view);
+                    view.start(controller);
+                    IO.println("Fermeture de l'interface graphique. Retour au menu...");
+                }
+                case 3 -> {
+                    IO.println("Fermeture du jeu. À bientôt !");
+                    continuer = false; 
+                }
+                default -> {
+                    System.err.println("Choix invalide. Veuillez réessayer.");
+                }
+            }
+        }
+        scanner.close();
+        System.exit(0); 
+    }
 }
