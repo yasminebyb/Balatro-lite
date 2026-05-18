@@ -15,14 +15,14 @@ public class Main {
 
     public static void main(String[] args) {
         try {
-            lancerJeu();
+            startGame();
         } catch (IOException e) {
             System.err.println("Erreur : " + e.getMessage());
             System.exit(1);
         }
     }
 
-    private static void lancerJeu() throws IOException {
+    private static void startGame() throws IOException {
         var blinds = List.<Blind>of(
             new StandardBlind("Petit aveugle", 50),
             new StandardBlind("Grand aveugle", 60),
