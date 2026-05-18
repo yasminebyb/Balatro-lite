@@ -5,155 +5,178 @@ import domain.Hand;
 import domain.Planet;
 import model.GameState;
 import view.View;
-
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 /**
  * Contrôleur principal du jeu Balatri.
  * <p>
- * Deux modes de fonctionnement :
- * - Console : {@link #run()} orchestre tout avec une boucle bloquante.
- * - Zen6 : {@link #initTour()} + {@link #onSelectionComplete(List)} réagissent
- *   aux événements sans bloquer la boucle graphique.
+ * Elle supporte deux paradigmes d'exécution :
+ * <ul>
+ * <li><b>Mode Console (Impératif) :</b> La méthode {@link #run()} bloque le fil
+ * d'exécution et gère la boucle de jeu de manière séquentielle.</li>
+ * <li><b>Mode Graphique Zen6 (Événementiel) :</b> Les méthodes
+ * {@link #initTurn()} et {@link #onSelectionComplete(List)} sont appelées en
+ * réaction aux interactions de l'utilisateur, sans bloquer la boucle de rendu
+ * de l'interface.</li>
+ * </ul>
  * </p>
  */
 public class GameController {
 
-    private final GameState state;
-    private final View view;
-    private List<Card> piocheCourante;
+	private final GameState state;
+	private final View view;
+	private List<Card> currentDraw;
 
-    /**
-     * @param state l'état initial de la partie, non null
-     * @param view  la vue à utiliser, non null
-     */
-    public GameController(GameState state, View view) {
-        this.state = Objects.requireNonNull(state, "state must not be null");
-        this.view  = Objects.requireNonNull(view,  "view must not be null");
-    }
+	/**
+	 * @param state l'état initial de la partie, non null
+	 * @param view  la vue à utiliser, non null
+	 */
+	public GameController(GameState state, View view) {
+		this.state = Objects.requireNonNull(state, "state must not be null");
+		this.view = Objects.requireNonNull(view, "view must not be null");
+	}
 
-    // ===================== MODE CONSOLE =====================
+	// ===================== MODE CONSOLE =====================
 
-    /**
-     * Lance la partie complète en mode console.
-     * Boucle bloquante — ne pas appeler en mode Zen6.
-     */
-    public void run() {
-        view.showMessage("=== BALATRI === Bonne chance !\n");
-        while (!state.isGameWon() && !state.isGameOver()) {
-            jouerUnBlind();
-        }
-        if (state.isGameWon()) {
-            view.showVictory();
-        }
-    }
+	/**
+	 * Lance la partie complète en mode console.
+	 * <p>
+	 * Cette méthode contient la boucle de jeu principale.
+	 * </p>
+	 */
+	public void run() {
+		view.showMessage("=== BALATRI === Bonne chance !\n");
 
-    private void jouerUnBlind() {
-        view.showMessage("\n=== "
-                + state.getCurrentBlind().name().toUpperCase()
-                + " — Cible : "
-                + state.getCurrentBlind().targetScore() + " pts ===");
+		while (!state.isGameWon() && !state.isGameOver()) {
+			playBlind();
+		}
 
-        while (state.hasHandsRemaining() && !state.isBlindBeaten()) {
-            view.showGameState(state);
-            jouerUnTour();
-        }
+		if (state.isGameWon()) {
+			view.showVictory();
+		}
+	}
 
-        if (state.isBlindBeaten()) {
-            gererBlindBattu();
-            // victoire vérifiée dans run()
-        } else {
-            view.showDefeat();
-        }
-    }
-    private void jouerUnTour() {
-        var pioche  = state.getDeck().draw(8);
-        view.showHand(pioche);
-        var indices = view.askCardSelection(pioche);
-        appliquerSelection(pioche, indices);
-    }
+	/**
+	 * Gère la boucle de jeu pour un "Blind" complet en mode console.
+	 * <p>
+	 * Fait jouer des tours au joueur tant qu'il lui reste des mains et que le score
+	 * cible n'est pas atteint. Gère ensuite la victoire ou la défaite du Blind.
+	 * </p>
+	 */
+	private void playBlind() {
+		view.showMessage("\n=== " + state.getCurrentBlind().name().toUpperCase() + " — Cible : "
+				+ state.getCurrentBlind().targetScore() + " pts ===");
 
-    // ===================== MODE ZEN6 =====================
+		while (state.hasHandsRemaining() && !state.isBlindBeaten()) {
+			view.showGameState(state);
+			jouerUnTour();
+		}
 
-    /**
-     * Initialise un nouveau tour en mode Zen6.
-     * Pioche 8 cartes et les transmet à la vue — sans bloquer.
-     * Appelé par {@code Zen6View} au démarrage et après chaque tour.
-     */
-    public void initTour() {
-        if (state.isGameWon()) {
-            view.showVictory();
-            return;
-        }
-        if (state.isGameOver()) {
-            view.showDefeat();
-            return;
-        }
-        view.showGameState(state);
-        piocheCourante = state.getDeck().draw(8);
-        view.showHand(piocheCourante);
-    }
+		if (state.isBlindBeaten()) {
+			handleBeatenBlind();
+		} else {
+			view.showDefeat();
+		}
+	}
 
-    /**
-     * Appelé par {@code Zen6View} quand le joueur a sélectionné 5 cartes.
-     * Calcule le score, met à jour l'état, prépare le tour suivant.
-     *
-     * @param indices les 5 indices sélectionnés par le joueur
-     * @throws NullPointerException si {@code indices} est null
-     */
-    public void onSelectionComplete(List<Integer> indices) {
-        Objects.requireNonNull(indices, "indices must not be null");
-        appliquerSelection(piocheCourante, indices);
+	/**
+	 * Gère le déroulement d'un unique tour de jeu (Mode Console). Pioche les
+	 * cartes, les affiche, demande le choix au joueur et applique le score.
+	 */
+	private void jouerUnTour() {
+		var drawnCards = state.getDeck().draw(8);
+		view.showHand(drawnCards);
+		var indices = view.askCardSelection(drawnCards);
+		applySelection(drawnCards, indices);
+	}
 
-        if (state.isBlindBeaten()) {
-            gererBlindBattu();
-        }
-        
-        if (state.isGameWon()) {
-            view.showVictory();
-            return;
-        }
+	// ===================== MODE ZEN6 =====================
 
-        if (state.isGameOver()) {
-            view.showDefeat();
-            return;
-        }
-        
-        initTour();
-    }
-    // ===================== COMMUN =====================
+	/**
+	 * Initialise un nouveau tour de jeu en mode graphique (Zen6).
+	 * <p>
+	 * Pioche 8 cartes et les transmet à la vue pour affichage. Appelé par
+	 * {@code Zen6View} au démarrage du jeu et après chaque tour validé.
+	 * </p>
+	 */
+	public void initTurn() {
+		if (state.isGameWon()) {
+			view.showVictory();
+			return;
+		}
+		if (state.isGameOver()) {
+			view.showDefeat();
+			return;
+		}
+		view.showGameState(state);
+		currentDraw = state.getDeck().draw(8);
+		view.showHand(currentDraw);
+	}
 
-    /**
-     * Applique la sélection du joueur — commun aux deux modes.
-     */
-    /**
-     * Applique la sélection du joueur — commun aux deux modes.
-     */
-    private void appliquerSelection(List<Card> pioche, List<Integer> indices) {
-        var cartesChoisies = new ArrayList<Card>();
-        for (int i : indices) {
-            cartesChoisies.add(pioche.get(i));
-        }
-        var hand = new Hand(cartesChoisies);
-        int chips = state.getChips(hand.getHandRank());
-        int mult  = state.getMult(hand.getHandRank());
-        int score = chips * mult;
-        view.showHandResult(hand, score);
-        
-        state.addScore(score);
-        state.decrementHands();
-        state.getDeck().discard(pioche);
-    }
+	/**
+	 * Appelé par {@code Zen6View} quand le joueur a sélectionné 5 cartes. Calcule
+	 * le score de la main, met à jour l'état de la partie, vérifie les conditions
+	 * de victoire/défaite, puis prépare le tour suivant.
+	 * 
+	 * @param indices la liste des 5 indices (de 0 à 7) correspondant aux cartes
+	 *                choisies
+	 * @throws NullPointerException si la liste {@code indices} est {@code null}
+	 */
 
-    private void gererBlindBattu() {
-        var planet = Planet.random();
-        state.applyPlanet(planet);
-        state.nextBlind(4);
-        // affiche la planète que si la partie continue
-        if (!state.isGameWon()) {
-            view.showPlanetReward(planet, state);
-        }
-    }
+	public void onSelectionComplete(List<Integer> indices) {
+		Objects.requireNonNull(indices, "indices must not be null");
+		applySelection(currentDraw, indices);
+
+		if (state.isBlindBeaten()) {
+			handleBeatenBlind();
+		}
+		if (state.isGameWon()) {
+			view.showVictory();
+			return;
+		}
+		if (state.isGameOver()) {
+			view.showDefeat();
+			return;
+		}
+
+		initTurn();
+	}
+
+	// ===================== COMMUN =====================
+
+	/**
+	 * Applique la sélection du joueur, évalue la main et met à jour le score
+	 * global. Méthode partagée entre le mode Console et le mode Zen6.
+	 *
+	 * @param drawnCards la liste des 8 cartes piochées pour ce tour
+	 * @param indices    la liste des indices des 5 cartes sélectionnées
+	 */
+	private void applySelection(List<Card> drawnCards, List<Integer> indices) {
+		var selectedCards = indices.stream().map(drawnCards::get).toList();
+
+		var hand = new Hand(selectedCards);
+		int chips = state.getChips(hand.getHandRank());
+		int mult = state.getMult(hand.getHandRank());
+		int score = chips * mult;
+		view.showHandResult(hand, score);
+
+		state.addScore(score);
+		state.decrementHands();
+		state.getDeck().discard(drawnCards);
+	}
+
+	/**
+	 * Applique les récompenses (Planètes) lorsqu'un Blind est battu et fait passer
+	 * le jeu au Blind suivant.
+	 */
+	private void handleBeatenBlind() {
+		var planet = Planet.random();
+		state.applyPlanet(planet);
+		state.nextBlind(4);
+
+		if (!state.isGameWon()) {
+			view.showPlanetReward(planet, state);
+		}
+	}
 }

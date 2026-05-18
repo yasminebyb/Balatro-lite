@@ -178,8 +178,8 @@ public class ConsoleView implements View {
 		while (true) {
 			IO.println("\n  Choisis 5 cartes parmi 0-7 (ex: 0 1 2 3 4) :");
 			IO.print("  > ");
-			var ligne = scanner.nextLine().trim();
-			var parts = ligne.split("\\s+");
+			var line = scanner.nextLine().trim();
+			var parts = line.split("\\s+");
 
 			if (parts.length != 5) {
 				IO.println("  Erreur : choisis exactement 5 cartes.");
@@ -187,31 +187,32 @@ public class ConsoleView implements View {
 			}
 
 			var indices = new ArrayList<Integer>();
-			var valide = true;
+			var isValid = true;
 
 			for (var part : parts) {
 				try {
 					var idx = Integer.parseInt(part);
 					if (idx < 0 || idx >= cards.size()) {
 						IO.println("  Erreur : indice " + idx + " invalide (0 a " + (cards.size() - 1) + ").");
-						valide = false;
+						isValid = false;
 						break;
 					}
 					if (indices.contains(idx)) {
 						IO.println("  Erreur : indice " + idx + " choisi deux fois.");
-						valide = false;
+						isValid = false;
 						break;
 					}
 					indices.add(idx);
 				} catch (NumberFormatException e) {
 					IO.println("  Erreur : " + part + " n'est pas un nombre.");
-					valide = false;
+					isValid = false;
 					break;
 				}
 			}
 
-			if (valide)
+			if (isValid) {
 				return indices;
+			}
 		}
 	}
 
@@ -221,14 +222,8 @@ public class ConsoleView implements View {
 	 * @param text  le texte à centrer, non null
 	 * @param width la largeur totale, strictement positive
 	 * @return le texte centré avec des espaces
-	 * @throws NullPointerException     si {@code text} est null
-	 * @throws IllegalArgumentException si {@code width} est négatif ou nul
 	 */
 	private static String center(String text, int width) {
-		Objects.requireNonNull(text, "text must not be null");
-		if (width <= 0) {
-			throw new IllegalArgumentException("width must be positive");
-		}
 		if (text.length() >= width)
 			return text;
 		var total = width - text.length();
@@ -243,14 +238,8 @@ public class ConsoleView implements View {
 	 * @param text  le texte à compléter, non null
 	 * @param width la largeur cible, strictement positive
 	 * @return le texte complété
-	 * @throws NullPointerException     si {@code text} est null
-	 * @throws IllegalArgumentException si {@code width} est négatif ou nul
 	 */
 	private static String pad(String text, int width) {
-		Objects.requireNonNull(text, "text must not be null");
-		if (width <= 0) {
-			throw new IllegalArgumentException("width must be positive");
-		}
 		if (text.length() >= width)
 			return text.substring(0, width);
 		return text + " ".repeat(width - text.length());
@@ -262,16 +251,11 @@ public class ConsoleView implements View {
 	 *
 	 * @param remaining le nombre de mains restantes, positif ou nul
 	 * @return la barre visuelle
-	 * @throws IllegalArgumentException si {@code remaining} est négatif
 	 */
 	private static String handsBar(int remaining) {
-		if (remaining < 0) {
-			throw new IllegalArgumentException("remaining must not be negative");
-		}
-		var bar = new StringBuilder();
-		for (int i = 0; i < 4; i++) {
-			bar.append(i < remaining ? "[*]" : "[ ]");
-		}
+		int stars = Math.min(remaining, 4); 
+		var empty = 4 - stars; 
+		var bar = "[*]".repeat(stars) + "[ ]".repeat(empty);
 		return bar + "  (" + remaining + " restante(s))";
 	}
 
