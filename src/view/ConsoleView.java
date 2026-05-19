@@ -214,7 +214,6 @@ public class ConsoleView implements View {
 				return indices;
 			}
 		}
-		return bar + "  (" + remaining + " restante(s))";
 	}
 
 	/**
@@ -254,8 +253,8 @@ public class ConsoleView implements View {
 	 * @return la barre visuelle
 	 */
 	private static String handsBar(int remaining) {
-		int stars = Math.min(remaining, 4); 
-		var empty = 4 - stars; 
+		int stars = Math.min(remaining, 4);
+		var empty = 4 - stars;
 		var bar = "[*]".repeat(stars) + "[ ]".repeat(empty);
 		return bar + "  (" + remaining + " restante(s))";
 	}

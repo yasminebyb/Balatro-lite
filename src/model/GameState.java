@@ -23,7 +23,7 @@ import java.util.Objects;
  * {@code GameController}.
  * </p>
  */
-public class GameState {
+public final class GameState {
 
 	/** Liste de tous les blinds de la partie */
 	private final List<Blind> blinds;
@@ -64,7 +64,7 @@ public class GameState {
 		if (handsPerBlind <= 0) {
 			throw new IllegalArgumentException("handsPerBlind must be positive");
 		}
-		this.blinds = blinds;
+		this.blinds = List.copyOf(blinds);
 		this.currentBlindIndex = 0;
 		this.currentScore = 0;
 		this.handsRemaining = handsPerBlind;

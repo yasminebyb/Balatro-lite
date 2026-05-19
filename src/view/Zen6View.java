@@ -36,7 +36,8 @@ import model.GameState;
  * Orchestre la boucle graphique principale et délègue toute la logique métier
  * au {@link GameController}. La sélection des cartes est gérée exclusivement
  * via les clics souris ({@link #handleClick}) ; la méthode
- * {@link #askCardSelection} n'est donc jamais appelée * </p>
+ * {@link #askCardSelection} n'est donc jamais appelée *
+ * </p>
  * <p>
  * Les ressources graphiques (fond, images de cartes) et sonores (musique
  * d'ambiance) sont chargées à la construction.
@@ -452,7 +453,7 @@ public class Zen6View implements View {
 				// barre de progression du score
 				int targetScore = currentState.getCurrentBlind().targetScore();
 				int currentScore = currentState.getCurrentScore();
-				double progress = Math.min(1.0, (double) currentScore / targetScore);
+				var progress = Math.min(1.0, (double) currentScore / targetScore);
 				g.setColor(new Color(60, 60, 60, 180));
 				g.fillRoundRect(35, 135, 250, 16, 8, 8);
 				g.setColor(new Color(80, 200, 100));
@@ -492,7 +493,7 @@ public class Zen6View implements View {
 					int chips = currentState.getChips(hr);
 					int mult = currentState.getMult(hr);
 					int pts = chips * mult;
-					boolean boosted = chips > hr.getBaseChips() || mult > hr.getBaseMult();
+					var boosted = chips > hr.getBaseChips() || mult > hr.getBaseMult();
 					g.setFont(new Font("Arial", Font.PLAIN, 12));
 					g.setColor(boosted ? new Color(80, 220, 120) : Color.WHITE);
 					g.drawString(hr.getLabel() + " : " + chips + "c x " + mult + "m = " + pts + " pts", panelX, levelY);
