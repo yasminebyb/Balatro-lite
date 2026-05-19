@@ -70,7 +70,7 @@ public class GameController {
 
 		while (state.hasHandsRemaining() && !state.isBlindBeaten()) {
 			view.showGameState(state);
-			jouerUnTour();
+			playTurn();
 		}
 
 		if (state.isBlindBeaten()) {
@@ -84,7 +84,7 @@ public class GameController {
 	 * Gère le déroulement d'un unique tour de jeu (Mode Console). Pioche les
 	 * cartes, les affiche, demande le choix au joueur et applique le score.
 	 */
-	private void jouerUnTour() {
+	private void playTurn() {
 		var drawnCards = state.getDeck().draw(8);
 		view.showHand(drawnCards);
 		var indices = view.askCardSelection(drawnCards);

@@ -11,7 +11,7 @@ package domain;
  * @see StandardBlind
  * @see model.GameState
  */
-public interface Blind {
+public sealed interface Blind permits StandardBlind {
 
 	/**
 	 * Retourne le nom du blind.
