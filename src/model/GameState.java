@@ -22,14 +22,10 @@ import java.util.Objects;
  * des méthodes de lecture et de modification d'état. La logique appartient à
  * {@code GameController}.
  * </p>
- *
- * @see domain.Blind
- * @see domain.Planet
- * @see domain.HandRank
  */
 public class GameState {
 
-	/** Liste de tous les blinds de la partie, dans l'ordre. */
+	/** Liste de tous les blinds de la partie */
 	private final List<Blind> blinds;
 
 	/** Index du blind courant dans la liste. */
@@ -81,20 +77,29 @@ public class GameState {
 		}
 	}
 
-	/**
-	 * Retourne le blind actuellement en cours.
-	 *
-	 * @return le blind courant
-	 */
+    /**
+     * Retourne le blind actuellement en cours.
+     * <p>
+     * <strong>Précondition :</strong> ne doit pas être appelé si
+     * {@link #isGameWon()} retourne {@code true}, car l'index interne
+     * serait hors des bornes de la liste.
+     * </p>
+     *
+     * @return le blind courant, jamais null
+     * @throws IndexOutOfBoundsException si tous les blinds ont déjà été battus
+     */
 	public Blind getCurrentBlind() {
 		return blinds.get(currentBlindIndex);
 	}
 
 	/**
-	 * Retourne le score cumulé sur le blind courant.
-	 *
-	 * @return le score courant
-	 */
+     * Retourne le score cumulé sur le blind courant.
+     * <p>
+     * Ce score est remis à zéro à chaque appel à {@link #nextBlind}.
+     * </p>
+     *
+     * @return le score courant, toujours positif ou nul
+     */
 	public int getCurrentScore() {
 		return currentScore;
 	}
@@ -102,7 +107,7 @@ public class GameState {
 	/**
 	 * Retourne le nombre de mains restantes pour le blind courant.
 	 *
-	 * @return les mains restantes
+	 * @return les mains restantes, positif ou nul 
 	 */
 	public int getHandsRemaining() {
 		return handsRemaining;
@@ -112,7 +117,7 @@ public class GameState {
 	 * Retourne les chips courants d'une combinaison (après planètes).
 	 *
 	 * @param hr la combinaison ciblée, non null
-	 * @return les chips courants
+	 * @return les chips courants, strcitement positifs
 	 * @throws NullPointerException si {@code hr} est null
 	 */
 	public int getChips(HandRank hr) {
@@ -124,7 +129,7 @@ public class GameState {
 	 * Retourne le mult courant d'une combinaison (après planètes).
 	 *
 	 * @param hr la combinaison ciblée, non null
-	 * @return le mult courant
+	 * @return le mult courant, strcitement positifs
 	 * @throws NullPointerException si {@code hr} est null
 	 */
 	public int getMult(HandRank hr) {
@@ -133,7 +138,7 @@ public class GameState {
 	}
 
 	/**
-	 * Retourne la pioche courante.
+	 * Retourne la pioche courante de la partie.
 	 *
 	 * @return le deck
 	 */
@@ -142,7 +147,7 @@ public class GameState {
 	}
 
 	/**
-	 * Indique si le score cumulé atteint la cible du blind courant.
+	 * Indique si le score cumulé atteint/depasse la cible du blind courant.
 	 *
 	 * @return {@code true} si le blind est battu
 	 */
@@ -151,7 +156,7 @@ public class GameState {
 	}
 
 	/**
-	 * Indique s'il reste des mains à jouer.
+	 * Indique s'il reste des mains à jouer pour le blind courant.
 	 *
 	 * @return {@code true} s'il reste au moins une main
 	 */
