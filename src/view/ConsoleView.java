@@ -214,6 +214,7 @@ public class ConsoleView implements View {
 				return indices;
 			}
 		}
+		return bar + "  (" + remaining + " restante(s))";
 	}
 
 	/**
