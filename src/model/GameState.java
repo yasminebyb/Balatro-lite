@@ -48,30 +48,61 @@ public final class GameState {
 	private final Deck deck;
 
 	/**
-	 * Crée un état de partie initial.
+	 * Nombre de défausses actives autorisées par blind (Extension B).
+	 * Valeur fixe pour toute la partie ; réinitialisée à chaque blind.
+	 */
+	private final int discardsPerBlind;
+
+	/**
+	 * Nombre de défausses actives restantes pour le blind courant.
+	 * Décrémenté par {@link #decrementDiscards()}, remis à
+	 * {@link #discardsPerBlind} par {@link #nextBlind}.
+	 */
+	private int discardsRemaining;
+
+	/**
+	 * Crée un état de partie avec 3 défausses par blind par défaut (Extension B).
+	 * <p>
+	 * Délègue vers {@link #GameState(List, int, int)} avec
+	 * {@code discardsPerBlind = 3}.
+	 * </p>
 	 *
-	 * @param blinds        la liste des blinds de la partie, non null et non vide
+	 * @param blinds        la liste des blinds, non null et non vide
 	 * @param handsPerBlind le nombre de mains autorisées par blind
-	 * @throws NullPointerException     si {@code blinds} est null
-	 * @throws IllegalArgumentException si {@code blinds} est vide ou si
-	 *                                  {@code handsPerBlind} est négatif ou nul
 	 */
 	public GameState(List<Blind> blinds, int handsPerBlind) {
+		this(blinds, handsPerBlind, 3);
+	}
+
+	/**
+	 * Crée un état de partie initial complet.
+	 *
+	 * @param blinds           la liste des blinds, non null et non vide
+	 * @param handsPerBlind    le nombre de mains autorisées par blind, strictement positif
+	 * @param discardsPerBlind le nombre de défausses actives par blind, positif ou nul
+	 * @throws NullPointerException     si {@code blinds} est null
+	 * @throws IllegalArgumentException si {@code blinds} est vide, ou si
+	 *                                  {@code handsPerBlind} est négatif ou nul,
+	 *                                  ou si {@code discardsPerBlind} est négatif
+	 */
+	public GameState(List<Blind> blinds, int handsPerBlind, int discardsPerBlind) {
 		Objects.requireNonNull(blinds, "blinds must not be null");
-		if (blinds.isEmpty()) {
+		if (blinds.isEmpty())
 			throw new IllegalArgumentException("blinds must not be empty");
-		}
-		if (handsPerBlind <= 0) {
+		if (handsPerBlind <= 0)
 			throw new IllegalArgumentException("handsPerBlind must be positive");
-		}
+		if (discardsPerBlind < 0)
+			throw new IllegalArgumentException("discardsPerBlind must not be negative");
+
 		this.blinds = List.copyOf(blinds);
 		this.currentBlindIndex = 0;
 		this.currentScore = 0;
 		this.handsRemaining = handsPerBlind;
+		this.discardsPerBlind = discardsPerBlind;
+		this.discardsRemaining = discardsPerBlind;
 		this.deck = new Deck();
 		this.levels = new EnumMap<>(HandRank.class);
 
-		// initialise chaque combinaison avec ses valeurs de base
 		for (HandRank hr : HandRank.values()) {
 			levels.put(hr, new int[] { hr.getBaseChips(), hr.getBaseMult() });
 		}
@@ -182,6 +213,37 @@ public final class GameState {
 		return handsRemaining > 0;
 	}
 
+	// ===================== DÉFAUSSES (Extension B) =====================
+
+	/**
+	 * Retourne le nombre de défausses actives restantes pour le blind courant.
+	 *
+	 * @return les défausses restantes, positif ou nul
+	 */
+	public int getDiscardsRemaining() {
+		return discardsRemaining;
+	}
+
+	/**
+	 * Indique si le joueur peut encore défausser des cartes ce blind.
+	 *
+	 * @return {@code true} s'il reste au moins une défausse disponible
+	 */
+	public boolean hasDiscardsRemaining() {
+		return discardsRemaining > 0;
+	}
+
+	/**
+	 * Décrémente le compteur de défausses restantes d'une unité.
+	 *
+	 * @throws IllegalStateException si {@code discardsRemaining} est déjà à zéro
+	 */
+	public void decrementDiscards() {
+		if (discardsRemaining <= 0)
+			throw new IllegalStateException("No discards remaining");
+		discardsRemaining--;
+	}
+
 	/**
 	 * Indique si la partie est perdue. La partie est perdue quand le blind n'est
 	 * pas battu et qu'il ne reste plus de mains.
@@ -241,27 +303,30 @@ public final class GameState {
 	}
 
 	/**
-	 * Passe au blind suivant et réinitialise le score et les mains.
+	 * Passe au blind suivant et réinitialise le score, les mains et les défausses.
 	 *
 	 * @param handsPerBlind le nombre de mains pour le nouveau blind
 	 * @throws IllegalArgumentException si {@code handsPerBlind} est négatif ou nul
 	 */
 	public void nextBlind(int handsPerBlind) {
-		if (handsPerBlind <= 0) {
+		if (handsPerBlind <= 0)
 			throw new IllegalArgumentException("handsPerBlind must be positive");
-		}
 		currentBlindIndex++;
 		currentScore = 0;
 		handsRemaining = handsPerBlind;
+		discardsRemaining = discardsPerBlind;
 	}
 
 	/**
 	 * Retourne une représentation textuelle de l'état courant.
 	 *
-	 * @return ex: {@code "Blind1 (cible : 300) | Score: 150 | Mains: 3"}
+	 * @return ex: {@code "Blind1 (cible : 300) | Score: 150 | Mains: 3 | Défausses: 2"}
 	 */
 	@Override
 	public String toString() {
-		return getCurrentBlind() + " | Score: " + currentScore + " | Mains: " + handsRemaining;
+		if (isGameWon()) return "Partie gagnée | Score final : " + currentScore;
+		return getCurrentBlind() + " | Score: " + currentScore
+				+ " | Mains: " + handsRemaining
+				+ " | Défausses: " + discardsRemaining;
 	}
 }

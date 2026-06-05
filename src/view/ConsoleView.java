@@ -97,6 +97,7 @@ public class ConsoleView implements View {
 						45)
 				+ "|");
 		IO.println("  |  " + pad("Mains  : " + handsBar(state.getHandsRemaining()), 45) + "|");
+		IO.println("  |  " + pad("Défauss: " + state.getDiscardsRemaining() + " restante(s)", 45) + "|");
 		IO.println("  |  " + pad("Pioche : " + state.getDeck().drawPileSize() + " cartes", 45) + "|");
 		IO.println("  |  " + pad("Défausse : " + state.getDeck().discardPileSize() + " cartes", 45) + "|");
 		IO.println("  +" + DOUBLE + "+");
@@ -169,6 +170,80 @@ public class ConsoleView implements View {
 		IO.println("  |" + center("Score insuffisant pour ce blind.", 47) + "|");
 		IO.println("  |" + center("", 47) + "|");
 		IO.println("  +" + DOUBLE + "+");
+	}
+
+	// ===================== EXTENSION B — DÉFAUSSE ACTIVE =====================
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @throws NullPointerException     si {@code updatedHand} est null
+	 * @throws IllegalArgumentException si {@code discardsRemaining} est négatif
+	 */
+	@Override
+	public void showDiscardResult(List<Card> updatedHand, int discardsRemaining) {
+		Objects.requireNonNull(updatedHand, "updatedHand must not be null");
+		if (discardsRemaining < 0)
+			throw new IllegalArgumentException("discardsRemaining must not be negative");
+		IO.println("\n  +" + SINGLE + "+");
+		IO.println("  |" + center("MAIN APRÈS DÉFAUSSE", 47) + "|");
+		IO.println("  +" + SINGLE + "+");
+		var sb = new StringBuilder();
+		for (int i = 0; i < updatedHand.size(); i++) {
+			sb.setLength(0);
+			sb.append("[").append(i).append("]  ").append(updatedHand.get(i));
+			IO.println("  |  " + pad(sb.toString(), 45) + "|");
+		}
+		IO.println("  +" + SINGLE + "+");
+		var msg = discardsRemaining > 0
+				? "Défausses restantes : " + discardsRemaining
+				: "Plus de défausse disponible.";
+		IO.println("  |  " + pad(msg, 45) + "|");
+		IO.println("  +" + SINGLE + "+");
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * Saisie bloquante. Le joueur tape les indices séparés par des espaces,
+	 * ou appuie sur Entrée sans rien saisir pour passer.
+	 * </p>
+	 *
+	 * @throws NullPointerException si {@code cards} est null
+	 */
+	@Override
+	public List<Integer> askDiscardSelection(List<Card> cards, int discardsRemaining) {
+		Objects.requireNonNull(cards, "cards must not be null");
+		IO.println("\n  Défausses restantes : " + discardsRemaining);
+		IO.println("  Indices à défausser (ex: 0 3 5), ou Entrée pour passer :");
+		IO.print("  > ");
+		var line = scanner.nextLine().trim();
+		if (line.isEmpty()) return List.of();
+
+		var parts = line.split("\\s+");
+		var indices = new java.util.ArrayList<Integer>();
+		for (var part : parts) {
+			try {
+				var idx = Integer.parseInt(part);
+				if (idx < 0 || idx >= cards.size()) {
+					IO.println("  Indice invalide : " + idx + ". Défausse annulée.");
+					return List.of();
+				}
+				if (indices.contains(idx)) {
+					IO.println("  Indice " + idx + " en double. Défausse annulée.");
+					return List.of();
+				}
+				indices.add(idx);
+			} catch (NumberFormatException e) {
+				IO.println("  Entrée invalide : \"" + part + "\". Défausse annulée.");
+				return List.of();
+			}
+		}
+		if (indices.size() >= cards.size()) {
+			IO.println("  Impossible de défausser toutes les cartes.");
+			return List.of();
+		}
+		return java.util.Collections.unmodifiableList(indices);
 	}
 
 	// ===================== SAISIE =====================
