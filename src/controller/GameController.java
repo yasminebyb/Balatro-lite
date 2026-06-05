@@ -2,6 +2,7 @@ package controller;
 
 import domain.Card;
 import domain.Hand;
+import domain.HandEvaluator;
 import domain.Planet;
 import model.GameState;
 import view.View;
@@ -154,8 +155,12 @@ public class GameController {
 	 */
 	private void applySelection(List<Card> drawnCards, List<Integer> indices) {
 		var selectedCards = indices.stream().map(drawnCards::get).toList();
-
 		var hand = new Hand(selectedCards);
+		
+		var active = HandEvaluator.activeCards(selectedCards); 
+		int cardBonus = active.stream().mapToInt(c -> c.rank().getValue()).sum();
+		view.showActiveCards(active, cardBonus);
+		
 		int chips = state.getChips(hand.getHandRank());
 		int mult = state.getMult(hand.getHandRank());
 		int score = chips * mult;

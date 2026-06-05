@@ -67,6 +67,32 @@ public final class HandEvaluator {
 	}
 
 	/**
+	 * Retourne les cartes actives de la main — celles qui participent à la
+	 * combinaison et dont les valeurs s'ajoutent aux chips (extension A).
+	 *
+	 * Règles : Quinte flush, Suite, Couleur, Full → 5 cartes actives Carré → 4
+	 * cartes identiques Brelan → 3 cartes identiques Double paire → 4 cartes (les 2
+	 * paires) Paire → 2 cartes identiques Carte haute → 1 carte (la plus haute)
+	 */
+	public static List<Card> activeCards(List<Card> cards) {
+		Objects.requireNonNull(cards, "cards must not be null");
+		if (cards.size() != 5)
+			throw new IllegalArgumentException("A hand must contain exactly 5 cards");
+
+		HandRank rank = evaluate(cards);
+		Map<Rank, Long> groups = groupByRank(cards);
+
+		return switch (rank) {
+		case STRAIGHT_FLUSH, STRAIGHT, FLUSH, FULL_HOUSE -> List.copyOf(cards);
+		case FOUR_OF_A_KIND -> cardsWithCount(cards, groups, 4);
+		case THREE_OF_A_KIND -> cardsWithCount(cards, groups, 3);
+		case TWO_PAIR -> cardsInPairs(cards, groups);
+		case PAIR -> cardsWithCount(cards, groups, 2);
+		case HIGH_CARD -> List.of(highestCard(cards));
+		};
+	}
+
+	/**
 	 * Regroupe les cartes par rang et compte les occurrences de chaque rang.
 	 * Exemple : [A♥ A♠ A♣ R♥ R♠] → {ACE=3, KING=2}
 	 *
@@ -129,4 +155,19 @@ public final class HandEvaluator {
 	private static boolean isPair(Map<Rank, Long> groups) {
 		return groups.containsValue(2L);
 	}
+
+	private static List<Card> cardsWithCount(List<Card> cards, Map<Rank, Long> groups, long count) {
+		return cards.stream().filter(c -> groups.get(c.rank()) == count).collect(Collectors.toList());
+	}
+
+	private static List<Card> cardsInPairs(List<Card> cards, Map<Rank, Long> groups) {
+		var pairRanks = groups.entrySet().stream().filter(e -> e.getValue() == 2L).map(Map.Entry::getKey)
+				.collect(Collectors.toSet());
+		return cards.stream().filter(c -> pairRanks.contains(c.rank())).collect(Collectors.toList());
+	}
+
+	private static Card highestCard(List<Card> cards) {
+		return cards.stream().max((a, b) -> a.rank().ordinal() - b.rank().ordinal()).orElseThrow();
+	}
+
 }

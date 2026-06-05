@@ -68,7 +68,17 @@ public class ConsoleView implements View {
 		IO.println("  |  " + pad("Score : +" + score + " pts", 45) + "|");
 		IO.println("  +" + SINGLE + "+");
 	}
-
+	
+	@Override
+	public void showActiveCards(List<Card> activeCards, int cardBonus) {
+	    Objects.requireNonNull(activeCards, "activeCards must not be null");
+	    IO.println("\n  +" + SINGLE + "+");
+	    IO.println("  |" + center("CARTES ACTIVES", 47) + "|");
+	    IO.println("  +" + SINGLE + "+");
+	    IO.println("  |  " + pad("Cartes : " + activeCards, 45) + "|");
+	    IO.println("  |  " + pad("Bonus  : +" + cardBonus + " chips", 45) + "|");
+	    IO.println("  +" + SINGLE + "+");
+	}
 	/**
 	 * {@inheritDoc}
 	 *
