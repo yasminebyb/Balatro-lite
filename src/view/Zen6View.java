@@ -54,7 +54,13 @@ public class Zen6View implements View {
 	private Color messageColor = Color.WHITE;
 	private BufferedImage background;
 	private Clip musicClip;
-	private boolean gameOver = false;
+	private volatile boolean gameOver = false;
+
+	/**
+	 * Référence au contrôleur, stockée lors de {@link #start(GameController)}.
+	 * Nécessaire pour les callbacks des boutons "Défausser" et "Jouer" (Extension B).
+	 */
+	private GameController controller;
 
 	/**
 	 * Construit la vue graphique et charge toutes les ressources nécessaires.
@@ -157,6 +163,7 @@ public class Zen6View implements View {
 	 */
 	public void start(GameController controller) {
 		Objects.requireNonNull(controller, "controller must not be null");
+		this.controller = controller;
 		Application.run(Color.BLACK, ctx -> {
 			this.context = ctx;
 
@@ -171,7 +178,7 @@ public class Zen6View implements View {
 					switch (event) {
 					case PointerEvent pe -> {
 						if (pe.action() == PointerEvent.Action.POINTER_DOWN) {
-							handleClick((int) pe.location().x(), (int) pe.location().y(), controller);
+							handleClick((int) pe.location().x(), (int) pe.location().y());
 						}
 					}
 					case KeyboardEvent ke -> {
@@ -197,48 +204,75 @@ public class Zen6View implements View {
 
 	// ===================== GESTION DES CLICS =====================
 	/**
-	 * Traite un clic souris et met à jour la sélection de cartes.
+	 * Traite un clic souris.
 	 * <p>
-	 * Si le clic atterrit sur une carte non sélectionnée et que la sélection compte
-	 * moins de 5 cartes, la carte est ajoutée. Si elle était déjà sélectionnée,
-	 * elle est retirée. Dès que 5 cartes sont sélectionnées,
-	 * {@link GameController#onSelectionComplete(List)} est notifié et la main
-	 * courante n'est plus affichée
-	 * </p>
-	 * <p>
-	 * La méthode ne fait rien si {@code currentCards} est {@code null} ou si la
-	 * partie est terminée.
+	 * Trois zones de clic sont détectées dans l'ordre :
+	 * <ol>
+	 *   <li>Bouton <em>Défausser</em> — si la sélection est non vide et qu'il
+	 *       reste des défausses disponibles.</li>
+	 *   <li>Bouton <em>Jouer</em> — si exactement 5 cartes sont sélectionnées.</li>
+	 *   <li>Zone d'une carte — bascule son état de sélection.</li>
+	 * </ol>
+	 * La méthode ne fait rien si {@code currentCards} est null ou si la partie
+	 * est terminée.
 	 * </p>
 	 *
-	 * @param mouseX     coordonnée X du clic, en pixels
-	 * @param mouseY     coordonnée Y du clic, en pixels
-	 * @param controller le contrôleur à notifier, non null
+	 * @param mouseX coordonnée X du clic, en pixels
+	 * @param mouseY coordonnée Y du clic, en pixels
 	 */
-	private void handleClick(int mouseX, int mouseY, GameController controller) {
-		if (currentCards == null || gameOver)
-			return;
+	private void handleClick(int mouseX, int mouseY) {
+		if (currentCards == null || gameOver || controller == null) return;
 
-		var info = context.getScreenInfo();
-		int cardWidth = 120;
-		int cardHeight = 160;
-		int spacing = 140;
-		int startX = (int) (info.width() / 2 - currentCards.size() * spacing / 2);
-		int cardY = (int) (info.height() - cardHeight - 40);
+		var info    = context.getScreenInfo();
+		int w       = (int) info.width();
+		int h       = (int) info.height();
+		int cardH   = 155;
+		int cardY   = h - cardH - 30;
+		int btnH    = 36;
+		int btnW    = 200;
+		int btnY    = cardY - 82;
+
+		// ── Bouton DÉFAUSSER ─────────────────────────────────────────────────
+		boolean canDiscard = currentState != null
+				&& currentState.hasDiscardsRemaining()
+				&& !selectedCards.isEmpty();
+		if (canDiscard) {
+			int btnX = w / 2 - btnW - 10;
+			if (mouseX >= btnX && mouseX <= btnX + btnW
+					&& mouseY >= btnY && mouseY <= btnY + btnH) {
+				var indices = List.copyOf(selectedCards);
+				selectedCards.clear();
+				controller.onDiscardComplete(indices);
+				return;
+			}
+		}
+
+		// ── Bouton JOUER ─────────────────────────────────────────────────────
+		if (selectedCards.size() == 5) {
+			int btnX = w / 2 + 10;
+			if (mouseX >= btnX && mouseX <= btnX + btnW
+					&& mouseY >= btnY && mouseY <= btnY + btnH) {
+				var indices = List.copyOf(selectedCards);
+				selectedCards.clear();
+				currentCards = null;
+				controller.onSelectionComplete(indices);
+				return;
+			}
+		}
+
+		// ── Zone des cartes ──────────────────────────────────────────────────
+		int spacing = 130;
+		int cardW   = 110;
+		int startX  = w / 2 - currentCards.size() * spacing / 2;
 
 		for (int i = 0; i < currentCards.size(); i++) {
 			int x = startX + i * spacing;
-			var ok = mouseX >= x && mouseX <= x + cardWidth && mouseY >= cardY && mouseY <= cardY + cardHeight;
-			if (ok) {
+			if (mouseX >= x && mouseX <= x + cardW
+					&& mouseY >= cardY && mouseY <= cardY + cardH) {
 				if (selectedCards.contains(i)) {
 					selectedCards.remove(Integer.valueOf(i));
 				} else if (selectedCards.size() < 5) {
 					selectedCards.add(i);
-				}
-				if (selectedCards.size() == 5) {
-					var selection = List.copyOf(selectedCards);
-					selectedCards.clear();
-					currentCards = null;
-					controller.onSelectionComplete(selection);
 				}
 				break;
 			}
@@ -385,6 +419,41 @@ public class Zen6View implements View {
 	}
 
 	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * Met à jour la main affichée avec les cartes de remplacement et affiche
+	 * un message cyan pendant 1,5 secondes pour indiquer la défausse effectuée.
+	 * </p>
+	 */
+	@Override
+	public void showDiscardResult(List<Card> updatedHand, int discardsRemaining) {
+		Objects.requireNonNull(updatedHand, "updatedHand must not be null");
+		if (discardsRemaining < 0)
+			throw new IllegalArgumentException("discardsRemaining must not be negative");
+		this.currentCards = updatedHand;
+		this.selectedCards.clear();
+		this.currentMessage = discardsRemaining > 0
+				? "Défausse effectuée — " + discardsRemaining + " restante(s)"
+				: "Défausse effectuée — plus de défausse disponible";
+		this.messageColor = Color.CYAN;
+		render();
+		pause(1500);
+		this.currentMessage = "";
+	}
+
+	/**
+	 * Non utilisé en mode Zen6 — la défausse passe par les clics souris et
+	 * {@link GameController#onDiscardComplete(List)}.
+	 *
+	 * @throws UnsupportedOperationException toujours
+	 */
+	@Override
+	public List<Integer> askDiscardSelection(List<Card> cards, int discardsRemaining) {
+		throw new UnsupportedOperationException(
+				"Zen6View: utiliser onDiscardComplete via handleClick");
+	}
+
+	/**
 	 * Non utilisé en mode Zen6 — la sélection passe par les clics souris. Lève une
 	 * exception si appelé par erreur.
 	 */
@@ -523,10 +592,59 @@ public class Zen6View implements View {
 				int startX = w / 2 - totalW / 2;
 				int cardY = h - cardHeight - 30;
 
-				// instruction
+				// ── Boutons DÉFAUSSER / JOUER ────────────────────────────────
+				int btnH  = 36;
+				int btnW  = 200;
+				int btnY  = cardY - 82;
+				g.setFont(new Font("Arial", Font.BOLD, 14));
+
+				// Bouton DÉFAUSSER — toujours visible, grisé si inactif
+				boolean canDiscard = currentState != null
+						&& currentState.hasDiscardsRemaining()
+						&& !selectedCards.isEmpty();
+				int discardBtnX = w / 2 - btnW - 10;
+				if (canDiscard) {
+					g.setColor(new Color(60, 140, 200, 200));
+					g.fillRoundRect(discardBtnX, btnY, btnW, btnH, 10, 10);
+					g.setColor(new Color(140, 210, 255));
+					g.drawRoundRect(discardBtnX, btnY, btnW, btnH, 10, 10);
+					g.setColor(Color.WHITE);
+				} else {
+					g.setColor(new Color(60, 60, 60, 160));
+					g.fillRoundRect(discardBtnX, btnY, btnW, btnH, 10, 10);
+					g.setColor(new Color(100, 100, 100, 180));
+					g.drawRoundRect(discardBtnX, btnY, btnW, btnH, 10, 10);
+					g.setColor(new Color(120, 120, 120));
+				}
+				int discardsLeft = (currentState != null) ? currentState.getDiscardsRemaining() : 0;
+				var discardLabel = "DÉFAUSSER  (" + discardsLeft + " restante(s))";
+				var discardLW = g.getFontMetrics().stringWidth(discardLabel);
+				g.drawString(discardLabel, discardBtnX + btnW / 2 - discardLW / 2, btnY + 23);
+
+				// Bouton JOUER — toujours visible, grisé si < 5 cartes sélectionnées
+				boolean canPlay = selectedCards.size() == 5;
+				int playBtnX = w / 2 + 10;
+				if (canPlay) {
+					g.setColor(new Color(40, 160, 80, 200));
+					g.fillRoundRect(playBtnX, btnY, btnW, btnH, 10, 10);
+					g.setColor(new Color(100, 220, 130));
+					g.drawRoundRect(playBtnX, btnY, btnW, btnH, 10, 10);
+					g.setColor(Color.WHITE);
+				} else {
+					g.setColor(new Color(60, 60, 60, 160));
+					g.fillRoundRect(playBtnX, btnY, btnW, btnH, 10, 10);
+					g.setColor(new Color(100, 100, 100, 180));
+					g.drawRoundRect(playBtnX, btnY, btnW, btnH, 10, 10);
+					g.setColor(new Color(120, 120, 120));
+				}
+				var playLabel = "JOUER  5 cartes";
+				var playLW = g.getFontMetrics().stringWidth(playLabel);
+				g.drawString(playLabel, playBtnX + btnW / 2 - playLW / 2, btnY + 23);
+
+				// ── Instruction ──────────────────────────────────────────────
 				g.setFont(new Font("Arial", Font.BOLD, 15));
 				g.setColor(Color.WHITE);
-				var instr = "Clique sur 5 cartes  (" + selectedCards.size() + " / 5)";
+				var instr = "Clique sur les cartes  (" + selectedCards.size() + " / 5)";
 				var instrW = g.getFontMetrics().stringWidth(instr);
 				g.setColor(new Color(0, 0, 0, 160));
 				g.fillRoundRect(w / 2 - instrW / 2 - 12, cardY - 38, instrW + 24, 28, 8, 8);
@@ -604,9 +722,23 @@ public class Zen6View implements View {
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * Affiche un bandeau doré indiquant les cartes actives et leur bonus de chips
+	 * pendant 1 seconde, puis efface le message.
+	 * </p>
+	 */
 	@Override
 	public void showActiveCards(List<Card> activeCards, int cardBonus) {
-		// TODO Auto-generated method stub
-		
+		Objects.requireNonNull(activeCards, "activeCards must not be null");
+		if (cardBonus < 0)
+			throw new IllegalArgumentException("cardBonus must not be negative");
+		if (activeCards.isEmpty()) return;
+		this.currentMessage = "Actives : " + activeCards + "  →  +" + cardBonus + " chips";
+		this.messageColor = new Color(220, 180, 80);
+		render();
+		pause(1000);
+		this.currentMessage = "";
 	}
 }

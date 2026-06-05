@@ -38,6 +38,44 @@ public interface View {
 	 */
 	List<Integer> askCardSelection(List<Card> cards);
 
+	// ===================== EXTENSION B — DÉFAUSSE ACTIVE =====================
+
+	/**
+	 * Demande au joueur quelles cartes il souhaite défausser avant de jouer.
+	 * <p>
+	 * Le joueur peut choisir un ou plusieurs indices parmi les cartes disponibles,
+	 * ou ne rien saisir pour passer. La liste retournée est vide si le joueur
+	 * décide de ne pas défausser.
+	 * </p>
+	 * <p>
+	 * <strong>Mode console uniquement</strong> — cette méthode est bloquante.
+	 * {@code Zen6View} lève {@link UnsupportedOperationException} : la défausse
+	 * graphique passe par {@code GameController#onDiscardComplete(List)}.
+	 * </p>
+	 *
+	 * @param cards             les cartes actuellement en main, non null
+	 * @param discardsRemaining le nombre de défausses encore disponibles, positif
+	 * @return liste des indices à défausser (peut être vide si le joueur passe),
+	 *         jamais null
+	 * @throws NullPointerException si {@code cards} est null
+	 */
+	List<Integer> askDiscardSelection(List<Card> cards, int discardsRemaining);
+
+	/**
+	 * Affiche la main mise à jour après une défausse active.
+	 * <p>
+	 * Appelée par {@code GameController} après avoir tiré les cartes de
+	 * remplacement. La vue doit raffraîchir son affichage de la main courante.
+	 * </p>
+	 *
+	 * @param updatedHand       la main après remplacement, non null
+	 * @param discardsRemaining le nombre de défausses restantes après cette
+	 *                          défausse, positif ou nul
+	 * @throws NullPointerException     si {@code updatedHand} est null
+	 * @throws IllegalArgumentException si {@code discardsRemaining} est négatif
+	 */
+	void showDiscardResult(List<Card> updatedHand, int discardsRemaining);
+
 
 	/**
 	 * Affiche les cartes actives de la main et le bonus de chips associé.

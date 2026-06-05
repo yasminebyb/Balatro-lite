@@ -250,4 +250,67 @@ class GameStateTest {
         state.nextBlind(4);
         assertTrue(state.isGameWon());
     }
+
+    // ===================== EXTENSION B — DÉFAUSSES =====================
+
+    @Test
+    void initialDiscards_isThree() {
+        assertEquals(3, state.getDiscardsRemaining());
+    }
+
+    @Test
+    void hasDiscardsRemaining_true_atStart() {
+        assertTrue(state.hasDiscardsRemaining());
+    }
+
+    @Test
+    void decrementDiscards_reducesCount() {
+        state.decrementDiscards();
+        assertEquals(2, state.getDiscardsRemaining());
+    }
+
+    @Test
+    void decrementDiscards_toZero() {
+        state.decrementDiscards();
+        state.decrementDiscards();
+        state.decrementDiscards();
+        assertEquals(0, state.getDiscardsRemaining());
+        assertFalse(state.hasDiscardsRemaining());
+    }
+
+    @Test
+    void decrementDiscards_belowZero_throwsISE() {
+        state.decrementDiscards();
+        state.decrementDiscards();
+        state.decrementDiscards();
+        assertThrows(IllegalStateException.class, () -> state.decrementDiscards());
+    }
+
+    @Test
+    void nextBlind_resetsDiscards() {
+        state.decrementDiscards();
+        state.decrementDiscards();
+        state.nextBlind(4);
+        assertEquals(3, state.getDiscardsRemaining());
+    }
+
+    @Test
+    void constructor_zeroDiscards_allowed() {
+        var noDiscardState = new GameState(
+            List.of(new StandardBlind("test", 100)), 4, 0);
+        assertEquals(0, noDiscardState.getDiscardsRemaining());
+        assertFalse(noDiscardState.hasDiscardsRemaining());
+    }
+
+    @Test
+    void constructor_negativeDiscards_throwsIAE() {
+        assertThrows(IllegalArgumentException.class, () ->
+            new GameState(List.of(new StandardBlind("test", 100)), 4, -1));
+    }
+
+    @Test
+    void toString_includesDiscards() {
+        var result = state.toString();
+        assertTrue(result.contains("Défausses"), "toString doit mentionner les défausses");
+    }
 }
