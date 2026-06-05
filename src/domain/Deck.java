@@ -28,8 +28,8 @@ public final class Deck {
 	 * Crée un paquet de 52 cartes mélangées aléatoirement.
 	 */
 	public Deck() {
-		drawPile = new ArrayList<>();
-		discardPile = new ArrayList<>();
+		drawPile = new ArrayList<>(52);
+		discardPile = new ArrayList<>(52);
 		initializeDeck();
 		shuffle();
 	}
@@ -55,28 +55,30 @@ public final class Deck {
 	/**
 	 * Pioche {@code count} cartes depuis la pioche.
 	 * <p>
-	 * Si la pioche ne contient pas assez de cartes, la défausse est remélangée et
-	 * réintégrée automatiquement.
+	 * Si la pioche ne contient pas assez de cartes, la défausse est
+	 * automatiquement remélangée et réintégrée avant de piocher.
 	 * </p>
 	 *
-	 * @param count le nombre de cartes à piocher
-	 * @return une liste immuable de {@code count} cartes
+	 * @param count le nombre de cartes à piocher, strictement positif
+	 * @return une liste immuable de {@code count} cartes piochées
 	 * @throws IllegalArgumentException si {@code count} est négatif ou nul
 	 * @throws IllegalStateException    si le paquet ne contient pas assez de cartes
 	 */
 	public List<Card> draw(int count) {
 		if (count <= 0) {
-			throw new IllegalArgumentException("Count must be positive");
+			throw new IllegalArgumentException("Count must be >= 0, got: " + count);
 		}
 		if (drawPile.size() < count) {
 			refill();
 		}
 		if (drawPile.size() < count) {
-			throw new IllegalStateException("Not enough cards in deck");
+			throw new IllegalStateException("Not enough cards in the deck");
 		}
-		List<Card> drawn = new ArrayList<>(drawPile.subList(0, count));
-		drawPile.subList(0, count).clear();
-		return Collections.unmodifiableList(drawn);
+		int starIndex = drawPile.size() - count;
+		var view = drawPile.subList(starIndex, drawPile.size());
+		List<Card> drawn = List.copyOf(view);
+		view.clear();
+		return drawn;
 	}
 
 	/**
