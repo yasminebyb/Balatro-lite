@@ -603,4 +603,10 @@ public class Zen6View implements View {
 			Thread.currentThread().interrupt();
 		}
 	}
+
+	@Override
+	public void showActiveCards(List<Card> activeCards, int cardBonus) {
+		// TODO Auto-generated method stub
+		
+	}
 }

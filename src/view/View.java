@@ -38,6 +38,23 @@ public interface View {
 	 */
 	List<Integer> askCardSelection(List<Card> cards);
 
+
+	/**
+	 * Affiche les cartes actives de la main et le bonus de chips associé.
+	 * <p>
+	 * Cette méthode est appelée par {@code GameController} après l'évaluation
+	 * de la main, avant {@link #showHandResult}.
+	 * </p>
+	 *
+	 * @param activeCards la liste des cartes actives, non null, peut être vide
+	 *                    si aucune carte ne contribue individuellement
+	 * @param cardBonus   le bonus total en chips apporté par les cartes actives,
+	 *                    positif ou nul
+	 * @throws NullPointerException     si {@code activeCards} est null
+	 * @throws IllegalArgumentException si {@code cardBonus} est strictement négatif
+	 * @see #showHandResult(Hand, int)
+	 */
+	void showActiveCards(List<Card> activeCards, int cardBonus); 
 	/**
 	 * Affiche la combinaison détectée et le score de la main jouée.
 	 *

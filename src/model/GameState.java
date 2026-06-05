@@ -91,6 +91,24 @@ public final class GameState {
 	public Blind getCurrentBlind() {
 		return blinds.get(currentBlindIndex);
 	}
+	
+	/**
+     * Retourne le numéro du blind courant (index basé sur 1 pour l'affichage).
+     *
+     * @return le numéro du blind (1 pour le premier)
+     */
+    public int getCurrentBlindNumber() {
+        return currentBlindIndex + 1;
+    }
+
+    /**
+     * Retourne le nombre total de blinds prévus dans la partie.
+     *
+     * @return le nombre total de blinds
+     */
+    public int getTotalBlinds() {
+        return blinds.size();
+    }
 
 	/**
      * Retourne le score cumulé sur le blind courant.
