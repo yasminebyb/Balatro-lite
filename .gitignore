@@ -1,10 +1,12 @@
-# Fichiers compilés par Eclipse
+# Fichiers compilés par Eclipse / Java
 bin/
+*.class
 
-# Fichiers de configuration spécifiques à Eclipse
+# Configuration locale Eclipse
 .settings/
-.project
-.classpath
+
+# Notes locales non livrables
+message.txt
 
 # Fichiers système (Mac/Windows)
 .DS_Store
