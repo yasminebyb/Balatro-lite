@@ -30,7 +30,7 @@ public class Main {
 		boolean shouldContinue = true;
 
 		while (shouldContinue) {
-			var state = new GameState(blinds, 4);
+			var state = new GameState(blinds);
 
 			IO.println("\n=== BALATRI ===");
 			IO.println("1 - Console");

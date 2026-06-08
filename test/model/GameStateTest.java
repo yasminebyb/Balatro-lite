@@ -20,7 +20,7 @@ class GameStateTest {
             new StandardBlind("Petit aveugle", 300),
             new StandardBlind("Grand aveugle", 800),
             new StandardBlind("Boss", 2000)
-        ), 4);
+        ));
     }
 
     // ===================== CONSTRUCTEUR =====================
@@ -31,8 +31,8 @@ class GameStateTest {
     }
 
     @Test
-    void constructor_initialHands_isFour() {
-        assertEquals(4, state.getHandsRemaining());
+    void constructor_initialHands_matchesConstant() {
+        assertEquals(GameState.HANDS_PER_BLIND, state.getHandsRemaining());
     }
 
     @Test
@@ -43,21 +43,14 @@ class GameStateTest {
     @Test
     void constructor_nullBlinds_throwsNPE() {
         assertThrows(NullPointerException.class, () ->
-            new GameState(null, 4)
+            new GameState(null)
         );
     }
 
     @Test
     void constructor_emptyBlinds_throwsIAE() {
         assertThrows(IllegalArgumentException.class, () ->
-            new GameState(List.of(), 4)
-        );
-    }
-
-    @Test
-    void constructor_invalidHands_throwsIAE() {
-        assertThrows(IllegalArgumentException.class, () ->
-            new GameState(List.of(new StandardBlind("test", 100)), 0)
+            new GameState(List.of())
         );
     }
 
@@ -133,24 +126,22 @@ class GameStateTest {
     @Test
     void decrementHands_reducesHandsRemaining() {
         state.decrementHands();
-        assertEquals(3, state.getHandsRemaining());
+        assertEquals(GameState.HANDS_PER_BLIND - 1, state.getHandsRemaining());
     }
 
     @Test
     void decrementHands_toZero() {
-        state.decrementHands();
-        state.decrementHands();
-        state.decrementHands();
-        state.decrementHands();
+        for (int i = 0; i < GameState.HANDS_PER_BLIND; i++) {
+            state.decrementHands();
+        }
         assertEquals(0, state.getHandsRemaining());
     }
 
     @Test
     void decrementHands_belowZero_throwsISE() {
-        state.decrementHands();
-        state.decrementHands();
-        state.decrementHands();
-        state.decrementHands();
+        for (int i = 0; i < GameState.HANDS_PER_BLIND; i++) {
+            state.decrementHands();
+        }
         assertThrows(IllegalStateException.class, () ->
             state.decrementHands()
         );
@@ -165,10 +156,9 @@ class GameStateTest {
 
     @Test
     void isGameOver_true_whenNoHandsAndBlindNotBeaten() {
-        state.decrementHands();
-        state.decrementHands();
-        state.decrementHands();
-        state.decrementHands();
+        for (int i = 0; i < GameState.HANDS_PER_BLIND; i++) {
+            state.decrementHands();
+        }
         assertTrue(state.isGameOver());
     }
 
@@ -212,28 +202,21 @@ class GameStateTest {
     @Test
     void nextBlind_resetsScore() {
         state.addScore(350);
-        state.nextBlind(4);
+        state.nextBlind();
         assertEquals(0, state.getCurrentScore());
     }
 
     @Test
     void nextBlind_resetsHands() {
         state.decrementHands();
-        state.nextBlind(4);
-        assertEquals(4, state.getHandsRemaining());
+        state.nextBlind();
+        assertEquals(GameState.HANDS_PER_BLIND, state.getHandsRemaining());
     }
 
     @Test
     void nextBlind_advancesToNextBlind() {
-        state.nextBlind(4);
+        state.nextBlind();
         assertEquals("Grand aveugle", state.getCurrentBlind().name());
-    }
-
-    @Test
-    void nextBlind_invalidHands_throwsIAE() {
-        assertThrows(IllegalArgumentException.class, () ->
-            state.nextBlind(0)
-        );
     }
 
     // ===================== ISGAMEWON =====================
@@ -245,9 +228,9 @@ class GameStateTest {
 
     @Test
     void isGameWon_true_afterAllBlinds() {
-        state.nextBlind(4);
-        state.nextBlind(4);
-        state.nextBlind(4);
+        state.nextBlind();
+        state.nextBlind();
+        state.nextBlind();
         assertTrue(state.isGameWon());
     }
 
@@ -283,29 +266,17 @@ class GameStateTest {
         state.decrementDiscards();
         state.decrementDiscards();
         state.decrementDiscards();
-        assertThrows(IllegalStateException.class, () -> state.decrementDiscards());
+        assertThrows(IllegalStateException.class, () ->
+            state.decrementDiscards()
+        );
     }
 
     @Test
     void nextBlind_resetsDiscards() {
         state.decrementDiscards();
         state.decrementDiscards();
-        state.nextBlind(4);
+        state.nextBlind();
         assertEquals(3, state.getDiscardsRemaining());
-    }
-
-    @Test
-    void constructor_zeroDiscards_allowed() {
-        var noDiscardState = new GameState(
-            List.of(new StandardBlind("test", 100)), 4, 0);
-        assertEquals(0, noDiscardState.getDiscardsRemaining());
-        assertFalse(noDiscardState.hasDiscardsRemaining());
-    }
-
-    @Test
-    void constructor_negativeDiscards_throwsIAE() {
-        assertThrows(IllegalArgumentException.class, () ->
-            new GameState(List.of(new StandardBlind("test", 100)), 4, -1));
     }
 
     @Test
