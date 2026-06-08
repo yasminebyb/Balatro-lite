@@ -23,8 +23,8 @@ public class Main {
 	}
 
 	private static void startGame() throws IOException {
-		var blinds = List.<Blind>of(new StandardBlind("Petit aveugle", 300), new StandardBlind("Grand aveugle", 800),
-				new StandardBlind("Boss", 2000));
+		var blinds = List.<Blind>of(new StandardBlind("Little Blind", 300), new StandardBlind("Big Blind", 800),
+				new StandardBlind("Boss Blind", 2000));
 
 		var scanner = new Scanner(System.in);
 		boolean shouldContinue = true;
