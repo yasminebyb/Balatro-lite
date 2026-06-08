@@ -44,7 +44,7 @@ Chaque blind donne 4 mains et 3 defausses actives. Quand un blind est battu, un 
 
 ## Regles de score
 
-Le score d'une main est calcule en deux etapes :
+Le score d'une main est calculé en deux etapes :
 
 1. `HandEvaluator.evaluate()` determine la meilleure combinaison parmi les 5 cartes jouees.
 2. `HandEvaluator.activeCards()` determine quelles cartes ajoutent leur valeur aux chips.
