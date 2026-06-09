@@ -7,21 +7,18 @@ import java.util.Objects;
 
 /**
  * Représente le paquet de cartes du jeu.
- * <p>
+ *
  * Gère deux piles : la pioche ({@code drawPile}) depuis laquelle le joueur tire
  * ses cartes, et la défausse ({@code discardPile}) où vont les cartes non
- * jouées. Lorsque la pioche ne contient plus assez de cartes, la défausse est
- * automatiquement remélangée et réintégrée dans la pioche.
- * </p>
+ * jouées. Lorsque la pioche est insuffisante, la défausse est automatiquement
+ * remélangée et réintégrée.
  */
 public final class Deck {
 
-	/** La pioche : Cartes disponibles à piocher. */
+	// Cartes disponibles à piocher
 	private final List<Card> drawPile;
 
-	/**
-	 * La défausse : Cartes défaussées, réintégrées dans la pioche si nécessaire.
-	 */
+	// Cartes défaussées, réintégrées dans la pioche si nécessaire
 	private final List<Card> discardPile;
 
 	/**
@@ -54,19 +51,19 @@ public final class Deck {
 
 	/**
 	 * Pioche {@code count} cartes depuis la pioche.
-	 * <p>
-	 * Si la pioche ne contient pas assez de cartes, la défausse est
-	 * automatiquement remélangée et réintégrée avant de piocher.
-	 * </p>
+	 *
+	 * Si la pioche ne contient pas assez de cartes, la défausse est automatiquement
+	 * remélangée et réintégrée avant de piocher.
 	 *
 	 * @param count le nombre de cartes à piocher, strictement positif
 	 * @return une liste immuable de {@code count} cartes piochées
 	 * @throws IllegalArgumentException si {@code count} est négatif ou nul
-	 * @throws IllegalStateException    si le paquet ne contient pas assez de cartes
+	 * @throws IllegalStateException    si le paquet ne contient toujours pas assez
+	 *                                  de cartes après réintégration
 	 */
 	public List<Card> draw(int count) {
 		if (count <= 0) {
-			throw new IllegalArgumentException("Count must be >= 0, got: " + count);
+			throw new IllegalArgumentException("Count must be > 0, got: " + count);
 		}
 		if (drawPile.size() < count) {
 			refill();
@@ -74,8 +71,8 @@ public final class Deck {
 		if (drawPile.size() < count) {
 			throw new IllegalStateException("Not enough cards in the deck");
 		}
-		int starIndex = drawPile.size() - count;
-		var view = drawPile.subList(starIndex, drawPile.size());
+		var startIndex = drawPile.size() - count;
+		var view = drawPile.subList(startIndex, drawPile.size());
 		List<Card> drawn = List.copyOf(view);
 		view.clear();
 		return drawn;
@@ -103,27 +100,22 @@ public final class Deck {
 	}
 
 	/**
-	 * Retourne le nombre de cartes restantes dans la pioche.
-	 *
-	 * @return taille de la pioche
+	 * @return le nombre de cartes restantes dans la pioche
 	 */
 	public int drawPileSize() {
 		return drawPile.size();
 	}
 
 	/**
-	 * Retourne le nombre de cartes dans la défausse.
-	 *
-	 * @return taille de la défausse
+	 * @return le nombre de cartes dans la défausse
 	 */
 	public int discardPileSize() {
 		return discardPile.size();
 	}
 
 	/**
-	 * Retourne une représentation textuelle de l'état du paquet.
-	 *
-	 * @return ex: {@code "Pioche: 44 | Défausse: 3"}
+	 * @return représentation textuelle du paquet ex :
+	 *         {@code "Pioche: 44 | Défausse: 3"}
 	 */
 	@Override
 	public String toString() {

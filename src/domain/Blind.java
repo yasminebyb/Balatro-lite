@@ -2,28 +2,26 @@ package domain;
 
 /**
  * Représente un objectif de score à atteindre dans une partie de Balatri.
- * <p>
- * Permet d'avoir différents types de blinds sans modifier le reste du code.
- * Implémentations disponibles : {@link StandardBlind}. Extension E : ajouter
- * des blinds avec contraintes en implémentant cette interface.
- * </p>
  *
  * @see StandardBlind
  * @see model.GameState
+ *
+ * @implNote Pour ajouter des blinds avec contraintes (Extension E), créer une
+ *           nouvelle implémentation de cette interface sans modifier le reste
+ *           du code.
  */
+
 public sealed interface Blind permits StandardBlind {
 
 	/**
-	 * Retourne le nom du blind.
-	 *
-	 * @return le nom
+	 * @return le nom du blind
 	 */
+
 	String name();
 
 	/**
-	 * Retourne le score cible à atteindre.
-	 *
-	 * @return le score cible, strictement positif
+	 * @return le score cible à atteindre, strictement positif
 	 */
+
 	int targetScore();
 }

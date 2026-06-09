@@ -7,32 +7,28 @@ import domain.Planet;
 import model.GameState;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Scanner;
 
 /**
  * Vue console de Balatri.
- * <p>
+ *
  * Affiche le jeu dans le terminal et lit les entrées clavier du joueur.
  * Implémente {@link View} — peut être remplacée par {@code Zen6View} sans
  * modifier {@code GameController}.
- * </p>
  */
-public class ConsoleView implements View {
+public final class ConsoleView implements View {
 
 	private final Scanner scanner = new Scanner(System.in);
 
 	private static final String DOUBLE = "=".repeat(47);
 	private static final String SINGLE = "-".repeat(47);
 
-	// ===================== AFFICHAGE =====================
+	// ===================== AFFICHAGE =========================================
 
-	/**
-	 * {@inheritDoc}
-	 *
-	 * @throws NullPointerException si {@code cards} est null
-	 */
+	/** {@inheritDoc} */
 	@Override
 	public void showHand(List<Card> cards) {
 		Objects.requireNonNull(cards, "cards must not be null");
@@ -48,12 +44,22 @@ public class ConsoleView implements View {
 		IO.println("  +" + SINGLE + "+");
 	}
 
-	/**
-	 * {@inheritDoc}
-	 *
-	 * @throws NullPointerException     si {@code hand} est null
-	 * @throws IllegalArgumentException si {@code score} est négatif
-	 */
+	/** {@inheritDoc} */
+	@Override
+	public void showActiveCards(List<Card> activeCards, int cardBonus) {
+		Objects.requireNonNull(activeCards, "activeCards must not be null");
+		if (cardBonus < 0) {
+			throw new IllegalArgumentException("cardBonus must not be negative");
+		}
+		IO.println("\n  +" + SINGLE + "+");
+		IO.println("  |" + center("CARTES ACTIVES", 47) + "|");
+		IO.println("  +" + SINGLE + "+");
+		IO.println("  |  " + pad("Cartes : " + activeCards, 45) + "|");
+		IO.println("  |  " + pad("Bonus  : +" + cardBonus + " chips", 45) + "|");
+		IO.println("  +" + SINGLE + "+");
+	}
+
+	/** {@inheritDoc} */
 	@Override
 	public void showHandResult(Hand hand, int score) {
 		Objects.requireNonNull(hand, "hand must not be null");
@@ -68,22 +74,8 @@ public class ConsoleView implements View {
 		IO.println("  |  " + pad("Score : +" + score + " pts", 45) + "|");
 		IO.println("  +" + SINGLE + "+");
 	}
-	
-	@Override
-	public void showActiveCards(List<Card> activeCards, int cardBonus) {
-	    Objects.requireNonNull(activeCards, "activeCards must not be null");
-	    IO.println("\n  +" + SINGLE + "+");
-	    IO.println("  |" + center("CARTES ACTIVES", 47) + "|");
-	    IO.println("  +" + SINGLE + "+");
-	    IO.println("  |  " + pad("Cartes : " + activeCards, 45) + "|");
-	    IO.println("  |  " + pad("Bonus  : +" + cardBonus + " chips", 45) + "|");
-	    IO.println("  +" + SINGLE + "+");
-	}
-	/**
-	 * {@inheritDoc}
-	 *
-	 * @throws NullPointerException si {@code state} est null
-	 */
+
+	/** {@inheritDoc} */
 	@Override
 	public void showGameState(GameState state) {
 		Objects.requireNonNull(state, "state must not be null");
@@ -92,10 +84,8 @@ public class ConsoleView implements View {
 		IO.println("  +" + DOUBLE + "+");
 		IO.println("  |  " + pad("Blind  : " + state.getCurrentBlind().name(), 45) + "|");
 		IO.println("  |  " + pad("Cible  : " + state.getCurrentBlind().targetScore() + " pts", 45) + "|");
-		IO.println("  |  "
-				+ pad("Score  : " + state.getCurrentScore() + " / " + state.getCurrentBlind().targetScore() + " pts",
-						45)
-				+ "|");
+		IO.println("  |  " + pad("Score  : " + state.getCurrentScore()
+				+ " / " + state.getCurrentBlind().targetScore() + " pts", 45) + "|");
 		IO.println("  |  " + pad("Mains  : " + handsBar(state.getHandsRemaining()), 45) + "|");
 		IO.println("  |  " + pad("Défauss: " + state.getDiscardsRemaining() + " restante(s)", 45) + "|");
 		IO.println("  |  " + pad("Pioche : " + state.getDeck().drawPileSize() + " cartes", 45) + "|");
@@ -107,18 +97,16 @@ public class ConsoleView implements View {
 		for (HandRank hr : HandRank.values()) {
 			var pts = state.getChips(hr) * state.getMult(hr);
 			sb.setLength(0);
-			sb.append(hr.getLabel()).append(" : ").append(state.getChips(hr)).append(" chips").append(" x ")
-					.append(state.getMult(hr)).append(" mult").append(" = ").append(pts).append(" pts");
+			sb.append(hr.getLabel()).append(" : ")
+					.append(state.getChips(hr)).append(" chips x ")
+					.append(state.getMult(hr)).append(" mult = ")
+					.append(pts).append(" pts");
 			IO.println("  |  " + pad(sb.toString(), 45) + "|");
 		}
 		IO.println("  +" + DOUBLE + "+");
 	}
 
-	/**
-	 * {@inheritDoc}
-	 *
-	 * @throws NullPointerException si {@code planet} ou {@code state} est null
-	 */
+	/** {@inheritDoc} */
 	@Override
 	public void showPlanetReward(Planet planet, GameState state) {
 		Objects.requireNonNull(planet, "planet must not be null");
@@ -128,22 +116,17 @@ public class ConsoleView implements View {
 		IO.println("  +" + DOUBLE + "+");
 		IO.println("  |  " + pad("Planete : " + planet.getLabel(), 45) + "|");
 		IO.println("  |  " + pad("Cible   : " + planet.getTarget().getLabel(), 45) + "|");
-		IO.println("  |  "
-				+ pad("Bonus   : +" + planet.getBonusChips() + " chips" + " / +" + planet.getBonusMult() + " mult", 45)
-				+ "|");
+		IO.println("  |  " + pad("Bonus   : +" + planet.getBonusChips()
+				+ " chips / +" + planet.getBonusMult() + " mult", 45) + "|");
 		IO.println("  +" + SINGLE + "+");
 		var chips = state.getChips(planet.getTarget());
 		var mult = state.getMult(planet.getTarget());
-		IO.println("  |  " + pad("Nouveau : " + planet.getTarget().getLabel() + " = " + chips + " chips" + " x " + mult
-				+ " mult" + " = " + (chips * mult) + " pts", 45) + "|");
+		IO.println("  |  " + pad("Nouveau : " + planet.getTarget().getLabel()
+				+ " = " + chips + " chips x " + mult + " mult = " + (chips * mult) + " pts", 45) + "|");
 		IO.println("  +" + DOUBLE + "+");
 	}
 
-	/**
-	 * {@inheritDoc}
-	 *
-	 * @throws NullPointerException si {@code message} est null
-	 */
+	/** {@inheritDoc} */
 	@Override
 	public void showMessage(String message) {
 		Objects.requireNonNull(message, "message must not be null");
@@ -174,17 +157,13 @@ public class ConsoleView implements View {
 
 	// ===================== EXTENSION B — DÉFAUSSE ACTIVE =====================
 
-	/**
-	 * {@inheritDoc}
-	 *
-	 * @throws NullPointerException     si {@code updatedHand} est null
-	 * @throws IllegalArgumentException si {@code discardsRemaining} est négatif
-	 */
+	/** {@inheritDoc} */
 	@Override
 	public void showDiscardResult(List<Card> updatedHand, int discardsRemaining) {
 		Objects.requireNonNull(updatedHand, "updatedHand must not be null");
-		if (discardsRemaining < 0)
+		if (discardsRemaining < 0) {
 			throw new IllegalArgumentException("discardsRemaining must not be negative");
+		}
 		IO.println("\n  +" + SINGLE + "+");
 		IO.println("  |" + center("MAIN APRÈS DÉFAUSSE", 47) + "|");
 		IO.println("  +" + SINGLE + "+");
@@ -204,10 +183,9 @@ public class ConsoleView implements View {
 
 	/**
 	 * {@inheritDoc}
-	 * <p>
-	 * Saisie bloquante. Le joueur tape les indices séparés par des espaces,
-	 * ou appuie sur Entrée sans rien saisir pour passer.
-	 * </p>
+	 *
+	 * Saisie bloquante. Le joueur tape les indices séparés par des espaces, ou
+	 * appuie sur Entrée sans rien saisir pour passer.
 	 *
 	 * @throws NullPointerException si {@code cards} est null
 	 */
@@ -218,10 +196,12 @@ public class ConsoleView implements View {
 		IO.println("  Indices à défausser (ex: 0 3 5), ou Entrée pour passer :");
 		IO.print("  > ");
 		var line = scanner.nextLine().trim();
-		if (line.isEmpty()) return List.of();
+		if (line.isEmpty()) {
+			return List.of();
+		}
 
 		var parts = line.split("\\s+");
-		var indices = new java.util.ArrayList<Integer>();
+		var indices = new ArrayList<Integer>();
 		for (var part : parts) {
 			try {
 				var idx = Integer.parseInt(part);
@@ -243,17 +223,12 @@ public class ConsoleView implements View {
 			IO.println("  Impossible de défausser toutes les cartes.");
 			return List.of();
 		}
-		return java.util.Collections.unmodifiableList(indices);
+		return Collections.unmodifiableList(indices);
 	}
 
-	// ===================== SAISIE =====================
+	// ===================== SAISIE ============================================
 
-	/**
-	 * {@inheritDoc}
-	 *
-	 * @throws NullPointerException     si {@code cards} est null
-	 * @throws IllegalArgumentException si {@code cards} est vide
-	 */
+	/** {@inheritDoc} */
 	@Override
 	public List<Integer> askCardSelection(List<Card> cards) {
 		Objects.requireNonNull(cards, "cards must not be null");
@@ -261,13 +236,14 @@ public class ConsoleView implements View {
 			throw new IllegalArgumentException("cards must not be empty");
 		}
 		while (true) {
-			IO.println("\n  Choisis 5 cartes parmi 0-7 (ex: 0 1 2 3 4) :");
+			IO.println("\n  Choisis " + Hand.SIZE + " cartes parmi 0-"
+					+ (cards.size() - 1) + " (ex: 0 1 2 3 4) :");
 			IO.print("  > ");
 			var line = scanner.nextLine().trim();
 			var parts = line.split("\\s+");
 
-			if (parts.length != 5) {
-				IO.println("  Erreur : choisis exactement 5 cartes.");
+			if (parts.length != Hand.SIZE) {
+				IO.println("  Erreur : choisis exactement " + Hand.SIZE + " cartes.");
 				continue;
 			}
 
@@ -278,7 +254,8 @@ public class ConsoleView implements View {
 				try {
 					var idx = Integer.parseInt(part);
 					if (idx < 0 || idx >= cards.size()) {
-						IO.println("  Erreur : indice " + idx + " invalide (0 a " + (cards.size() - 1) + ").");
+						IO.println("  Erreur : indice " + idx
+								+ " invalide (0 a " + (cards.size() - 1) + ").");
 						isValid = false;
 						break;
 					}
@@ -301,6 +278,8 @@ public class ConsoleView implements View {
 		}
 	}
 
+	// ===================== UTILITAIRES =======================================
+
 	/**
 	 * Centre un texte dans une largeur donnée.
 	 *
@@ -309,8 +288,9 @@ public class ConsoleView implements View {
 	 * @return le texte centré avec des espaces
 	 */
 	private static String center(String text, int width) {
-		if (text.length() >= width)
+		if (text.length() >= width) {
 			return text;
+		}
 		var total = width - text.length();
 		var left = total / 2;
 		var right = total - left;
@@ -322,26 +302,26 @@ public class ConsoleView implements View {
 	 *
 	 * @param text  le texte à compléter, non null
 	 * @param width la largeur cible, strictement positive
-	 * @return le texte complété
+	 * @return le texte complété (tronqué si trop long)
 	 */
 	private static String pad(String text, int width) {
-		if (text.length() >= width)
+		if (text.length() >= width) {
 			return text.substring(0, width);
+		}
 		return text + " ".repeat(width - text.length());
 	}
 
 	/**
-	 * Affiche une barre visuelle des mains restantes. Exemple : [*][*][*][*] pour 4
-	 * mains, [*][*][ ][ ] pour 2 mains.
+	 * Affiche une barre visuelle des mains restantes. Exemple :
+	 * {@code "[*][*][*][*]"} pour 4 mains, {@code "[*][*][ ][ ]"} pour 2.
 	 *
 	 * @param remaining le nombre de mains restantes, positif ou nul
 	 * @return la barre visuelle
 	 */
 	private static String handsBar(int remaining) {
-		int stars = Math.min(remaining, 4);
-		var empty = 4 - stars;
-		var bar = "[*]".repeat(stars) + "[ ]".repeat(empty);
-		return bar + "  (" + remaining + " restante(s))";
+		int stars = Math.min(remaining, GameState.HANDS_PER_BLIND);
+		int empty = GameState.HANDS_PER_BLIND - stars;
+		return "[*]".repeat(stars) + "[ ]".repeat(empty)
+				+ "  (" + remaining + " restante(s))";
 	}
-
 }

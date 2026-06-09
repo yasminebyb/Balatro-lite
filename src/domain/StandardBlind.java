@@ -4,10 +4,8 @@ import java.util.Objects;
 
 /**
  * Blind standard sans contrainte particulière.
- * <p>
- * Implémentation de base de {@link Blind} : un nom et un score cible. C'est le
- * type de blind utilisé dans la phase 1 du projet.
- * </p>
+ *
+ * Implémentation de base de {@link Blind} : un nom et un score cible.
  *
  * @param name        le nom du blind, non null et non vide
  * @param targetScore le score cible à atteindre, strictement positif
@@ -16,11 +14,10 @@ import java.util.Objects;
 public record StandardBlind(String name, int targetScore) implements Blind {
 
 	/**
-	 * Constructeur compact : vérifie la validité des paramètres.
-	 *
 	 * @throws NullPointerException     si {@code name} est null
 	 * @throws IllegalArgumentException si {@code name} est vide ou si
-	 *                                  {@code targetScore} est négatif ou nul
+	 *                                  {@code targetScore} est inférieur ou égal à
+	 *                                  zéro
 	 */
 	public StandardBlind {
 		Objects.requireNonNull(name, "name must not be null");
@@ -33,10 +30,8 @@ public record StandardBlind(String name, int targetScore) implements Blind {
 	}
 
 	/**
-	 * Retourne une représentation textuelle du blind. Format :
-	 * {@code "nom (cible : score)"} Exemple : {@code "blind1 (cible : 300)"}
-	 *
-	 * @return la représentation textuelle
+	 * @return Resprésentation textuelle du blind. ex :
+	 *         {@code "blind1 (cible : 300)"}
 	 */
 	@Override
 	public String toString() {

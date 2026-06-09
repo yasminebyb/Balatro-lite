@@ -1,19 +1,18 @@
 package domain;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * Évalue une main de 5 cartes et retourne la combinaison (de pocker)
- * correspondante.
- * <p>
+ * Évalue une main de {@value Hand#SIZE} cartes et retourne la combinaison de
+ * poker correspondante.
+ *
  * Cette classe est un utilitaire statique : elle ne peut pas être instanciée.
  * L'évaluation se fait du rang le plus fort au plus faible pour éviter les faux
- * positifs (ex: un Full contient un Brelan, donc Full doit être testé en
- * premier).
- * </p>
+ * positifs (ex : un Full contient un Brelan, donc Full est testé en premier).
  *
  * @see HandRank
  * @see Hand
@@ -25,29 +24,29 @@ public final class HandEvaluator {
 	}
 
 	/**
-	 * Évalue une main de 5 cartes et retourne son {@link HandRank}.
-	 * <p>
+	 * Évalue une main de {@value Hand#SIZE} cartes et retourne son
+	 * {@link HandRank}.
+	 *
 	 * L'As peut être utilisé comme carte basse (A-2-3-4-5) ou comme carte haute
 	 * (10-V-D-R-A).
-	 * </p>
 	 *
-	 * @param cards liste de 5 cartes à évaluer
+	 * @param cards liste de {@value Hand#SIZE} cartes à évaluer, non null
 	 * @return le {@link HandRank} correspondant à la meilleure combinaison
 	 * @throws NullPointerException     si {@code cards} est null
-	 * @throws IllegalArgumentException si la liste ne contient pas exactement 5
-	 *                                  cartes
+	 * @throws IllegalArgumentException si la liste ne contient pas exactement
+	 *                                  {@value Hand#SIZE} cartes
 	 */
 	public static HandRank evaluate(List<Card> cards) {
 		Objects.requireNonNull(cards, "cards must not be null");
-		if (cards.size() != 5) {
-			throw new IllegalArgumentException("A hand must contain exactly 5 cards");
+		if (cards.size() != Hand.SIZE) {
+			throw new IllegalArgumentException("A hand must contain exactly " + Hand.SIZE + " cards");
 		}
 
 		boolean flush = isFlush(cards);
 		boolean straight = isStraight(cards);
 		Map<Rank, Long> groups = groupByRank(cards);
 
-		if (flush && straight)
+		if (flush && straight) 
 			return HandRank.STRAIGHT_FLUSH;
 		if (isFourOfAKind(groups))
 			return HandRank.FOUR_OF_A_KIND;
@@ -68,44 +67,56 @@ public final class HandEvaluator {
 
 	/**
 	 * Retourne les cartes actives de la main — celles qui participent à la
-	 * combinaison et dont les valeurs s'ajoutent aux chips (extension A).
+	 * combinaison et dont les valeurs s'ajoutent aux chips (Extension A).
 	 *
-	 * Règles : Quinte flush, Suite, Couleur, Full → 5 cartes actives Carré → 4
-	 * cartes identiques Brelan → 3 cartes identiques Double paire → 4 cartes (les 2
-	 * paires) Paire → 2 cartes identiques Carte haute → 1 carte (la plus haute)
+	 * <ul>
+	 * <li>Quinte flush, Suite, Couleur, Full → {@value Hand#SIZE} cartes
+	 * actives</li>
+	 * <li>Carré → 4 cartes identiques</li>
+	 * <li>Brelan → 3 cartes identiques</li>
+	 * <li>Double paire → 4 cartes (les 2 paires)</li>
+	 * <li>Paire → 2 cartes identiques</li>
+	 * <li>Carte haute → 1 carte (la plus haute)</li>
+	 * </ul>
+	 *
+	 * @param cards liste de {@value Hand#SIZE} cartes à analyser, non null
+	 * @return la liste des cartes actives, jamais null
+	 * @throws NullPointerException     si {@code cards} est null
+	 * @throws IllegalArgumentException si la liste ne contient pas exactement
+	 *                                  {@value Hand#SIZE} cartes
 	 */
 	public static List<Card> activeCards(List<Card> cards) {
 		Objects.requireNonNull(cards, "cards must not be null");
-		if (cards.size() != 5)
-			throw new IllegalArgumentException("A hand must contain exactly 5 cards");
+		if (cards.size() != Hand.SIZE)
+			throw new IllegalArgumentException(
+					"A hand must contain exactly " + Hand.SIZE + " cards");
 
 		HandRank rank = evaluate(cards);
 		Map<Rank, Long> groups = groupByRank(cards);
 
 		return switch (rank) {
-		case STRAIGHT_FLUSH, STRAIGHT, FLUSH, FULL_HOUSE -> List.copyOf(cards);
-		case FOUR_OF_A_KIND -> cardsWithCount(cards, groups, 4);
-		case THREE_OF_A_KIND -> cardsWithCount(cards, groups, 3);
-		case TWO_PAIR -> cardsInPairs(cards, groups);
-		case PAIR -> cardsWithCount(cards, groups, 2);
-		case HIGH_CARD -> List.of(highestCard(cards));
+			case STRAIGHT_FLUSH, STRAIGHT, FLUSH, FULL_HOUSE -> List.copyOf(cards);
+			case FOUR_OF_A_KIND -> cardsWithCount(cards, groups, 4);
+			case THREE_OF_A_KIND -> cardsWithCount(cards, groups, 3);
+			case TWO_PAIR -> cardsInPairs(cards, groups);
+			case PAIR -> cardsWithCount(cards, groups, 2);
+			case HIGH_CARD -> List.of(highestCard(cards));
 		};
 	}
 
 	/**
 	 * Regroupe les cartes par rang et compte les occurrences de chaque rang.
-	 * Exemple : [A♥ A♠ A♣ R♥ R♠] → {ACE=3, KING=2}
+	 * Exemple : {@code [A♥ A♠ A♣ R♥ R♠] → {ACE=3, KING=2}}
 	 *
 	 * @param cards les cartes à regrouper
 	 * @return une map rang → nombre d'occurrences
 	 */
 	private static Map<Rank, Long> groupByRank(List<Card> cards) {
-		return cards.stream().collect(Collectors.groupingBy(Card::rank, Collectors.counting()));
+		return cards.stream()
+				.collect(Collectors.groupingBy(Card::rank, Collectors.counting()));
 	}
 
 	/**
-	 * Vérifie que toutes les cartes ont la même enseigne.
-	 *
 	 * @param cards les cartes à vérifier
 	 * @return {@code true} si toutes les cartes ont la même enseigne
 	 */
@@ -115,22 +126,25 @@ public final class HandEvaluator {
 
 	/**
 	 * Vérifie que les rangs des cartes sont consécutifs.
-	 * <p>
+	 *
 	 * Gère le cas particulier A-2-3-4-5 où l'As joue comme carte basse. Repose sur
-	 * {@link Rank#ordinal()} : l'ordre de déclaration dans l'enum doit donc rester
+	 * {@link Rank#ordinal()} : l'ordre de déclaration dans l'enum doit rester
 	 * TWO(0) ... ACE(12).
-	 * </p>
 	 *
 	 * @param cards les cartes à vérifier
 	 * @return {@code true} si les cartes forment une suite
 	 */
 	private static boolean isStraight(List<Card> cards) {
-		List<Integer> ordinals = cards.stream().map(c -> c.rank().ordinal()).sorted().toList();
+		List<Integer> ordinals = cards.stream()
+				.map(c -> c.rank().ordinal())
+				.sorted()
+				.toList();
 
-		// cas normal : écart de 4 entre le plus petit et le plus grand, tous distincts
-		boolean normal = ordinals.get(4) - ordinals.get(0) == 4 && ordinals.stream().distinct().count() == 5;
+		// Cas normal : écart de 4 entre le plus petit et le plus grand, tous distincts
+		boolean normal = ordinals.get(Hand.SIZE - 1) - ordinals.get(0) == Hand.SIZE - 1
+				&& ordinals.stream().distinct().count() == Hand.SIZE;
 
-		// cas spécial : A-2-3-4-5 → ordinals [0,1,2,3,12] après tri
+		// Cas spécial : A-2-3-4-5 → ordinals [0,1,2,3,12] après tri
 		boolean wheel = ordinals.equals(List.of(0, 1, 2, 3, 12));
 
 		return normal || wheel;
@@ -156,18 +170,28 @@ public final class HandEvaluator {
 		return groups.containsValue(2L);
 	}
 
-	private static List<Card> cardsWithCount(List<Card> cards, Map<Rank, Long> groups, long count) {
-		return cards.stream().filter(c -> groups.get(c.rank()) == count).collect(Collectors.toList());
+	private static List<Card> cardsWithCount(List<Card> cards,
+			Map<Rank, Long> groups,
+			long count) {
+		return cards.stream()
+				.filter(c -> groups.get(c.rank()) == count)
+				.collect(Collectors.toList());
 	}
 
-	private static List<Card> cardsInPairs(List<Card> cards, Map<Rank, Long> groups) {
-		var pairRanks = groups.entrySet().stream().filter(e -> e.getValue() == 2L).map(Map.Entry::getKey)
+	private static List<Card> cardsInPairs(List<Card> cards,
+			Map<Rank, Long> groups) {
+		var pairRanks = groups.entrySet().stream()
+				.filter(e -> e.getValue() == 2L)
+				.map(Map.Entry::getKey)
 				.collect(Collectors.toSet());
-		return cards.stream().filter(c -> pairRanks.contains(c.rank())).collect(Collectors.toList());
+		return cards.stream()
+				.filter(c -> pairRanks.contains(c.rank()))
+				.collect(Collectors.toList());
 	}
 
 	private static Card highestCard(List<Card> cards) {
-		return cards.stream().max((a, b) -> a.rank().ordinal() - b.rank().ordinal()).orElseThrow();
+		return cards.stream()
+				.max(Comparator.comparingInt(c -> c.rank().ordinal()))
+				.orElseThrow();
 	}
-
 }
