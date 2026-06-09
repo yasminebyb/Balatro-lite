@@ -39,7 +39,6 @@ public final class Zen6View implements View {
 	private final Zen6Assets assets;
 	private final Zen6Renderer renderer;
 
-	// Injecté via start() et non via le constructeur (boucle Zen6 asynchrone)
 	private GameController controller;
 	private GameState currentState;
 	private List<Card> currentCards;

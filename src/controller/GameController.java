@@ -106,7 +106,7 @@ public class GameController {
 			var toDiscard = view.askDiscardSelection(
 					Collections.unmodifiableList(hand),
 					state.getDiscardsRemaining());
-			
+
 			if (toDiscard.isEmpty())
 				break;
 			processDiscard(hand, toDiscard);

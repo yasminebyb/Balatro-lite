@@ -46,7 +46,7 @@ public final class HandEvaluator {
 		boolean straight = isStraight(cards);
 		Map<Rank, Long> groups = groupByRank(cards);
 
-		if (flush && straight) 
+		if (flush && straight)
 			return HandRank.STRAIGHT_FLUSH;
 		if (isFourOfAKind(groups))
 			return HandRank.FOUR_OF_A_KIND;
@@ -95,12 +95,12 @@ public final class HandEvaluator {
 		Map<Rank, Long> groups = groupByRank(cards);
 
 		return switch (rank) {
-			case STRAIGHT_FLUSH, STRAIGHT, FLUSH, FULL_HOUSE -> List.copyOf(cards);
-			case FOUR_OF_A_KIND -> cardsWithCount(cards, groups, 4);
-			case THREE_OF_A_KIND -> cardsWithCount(cards, groups, 3);
-			case TWO_PAIR -> cardsInPairs(cards, groups);
-			case PAIR -> cardsWithCount(cards, groups, 2);
-			case HIGH_CARD -> List.of(highestCard(cards));
+		case STRAIGHT_FLUSH, STRAIGHT, FLUSH, FULL_HOUSE -> List.copyOf(cards);
+		case FOUR_OF_A_KIND -> cardsWithCount(cards, groups, 4);
+		case THREE_OF_A_KIND -> cardsWithCount(cards, groups, 3);
+		case TWO_PAIR -> cardsInPairs(cards, groups);
+		case PAIR -> cardsWithCount(cards, groups, 2);
+		case HIGH_CARD -> List.of(highestCard(cards));
 		};
 	}
 

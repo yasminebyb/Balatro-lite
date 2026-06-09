@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public final class GameState {
 
-	// === Constantes === 
+	// === Constantes ===
 
 	// Nombre de mains accordées par blind
 	public static final int HANDS_PER_BLIND = 4;
@@ -37,7 +37,7 @@ public final class GameState {
 	// Nombre de défausses actives autorisées par blind (Extension B)
 	private static final int DISCARDS_PER_BLIND = 3;
 
-	// === Champs === 
+	// === Champs ===
 
 	// Liste immuable de tous les blinds de la partie
 	private final List<Blind> blinds;
@@ -134,7 +134,7 @@ public final class GameState {
 		return HANDS_PER_BLIND;
 	}
 
-	//  Accesseurs — niveaux 
+	// Accesseurs — niveaux
 	/**
 	 * @param hr la combinaison ciblée, non null
 	 * @return les chips courants (après planètes), strictement positifs
@@ -179,7 +179,7 @@ public final class GameState {
 		return discardsRemaining > 0;
 	}
 
-	// Prédicats 
+	// Prédicats
 	/**
 	 * @return {@code true} si le score cumulé atteint ou dépasse la cible
 	 */
@@ -212,7 +212,7 @@ public final class GameState {
 		return !isBlindBeaten() && !hasHandsRemaining();
 	}
 
-	// Mutations d'état 
+	// Mutations d'état
 	/**
 	 * Ajoute des points au score cumulé du blind courant.
 	 *
