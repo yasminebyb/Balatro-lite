@@ -17,12 +17,11 @@ import model.GameState;
  * Moteur de rendu graphique de Balatri.
  *
  * Responsabilité unique : calculer les positions et dessiner chaque frame. Ne
- * gère ni les événements ni l'état de la vue — délégués à {@link Zen6View}.
+ * gère ni les événements ni l'état de la vue : délégués à {@link Zen6View}.
  */
 public class Zen6Renderer {
 
 	// Dimensions des cartes
-
 	public static final int CARD_W = 130;
 	public static final int CARD_H = 183;
 	public static final int SPACING = 148;
@@ -46,7 +45,6 @@ public class Zen6Renderer {
 	private static final Color CARD_BLACK = new Color(0x8a, 0x7a, 0x6a);
 
 	// Mise en page
-
 	static final int MARGIN = 10;
 	static final int TOP_H = 150;
 	static final int LEFT_W = 300;
@@ -61,7 +59,6 @@ public class Zen6Renderer {
 	private static final int PILE_ZONE_H = PILE_H + 32;
 
 	// Polices
-
 	private static final String FONT = "Courier New";
 
 	private static final Font F_SCORE_BIG = new Font(FONT, Font.BOLD, 48);
@@ -72,7 +69,7 @@ public class Zen6Renderer {
 	private static final Font F_CARD_BACK = new Font(FONT, Font.BOLD, 26);
 	private static final Font F_MSG = new Font(FONT, Font.BOLD, 26);
 
-	// Cache de polices — clé = style<<8 | size
+	// Cache de polices : clé = style<<8 | size
 	private static final Map<Integer, Font> COURIER_CACHE = new HashMap<>();
 
 	private static Font courier(int style, int size) {
@@ -311,7 +308,7 @@ public class Zen6Renderer {
 		int deckCount = state != null ? state.getDeck().drawPileSize() : 52;
 		int discardCount = state != null ? state.getDeck().discardPileSize() : 0;
 
-		int pileY = y + ph - PILE_ZONE_H - 40;
+		int pileY = y + ph - PILE_ZONE_H - 15;
 		int leftCx = x + pw / 4;
 		int rightCx = x + 3 * pw / 4;
 		int pileX1 = leftCx - PILE_W / 2;
@@ -406,7 +403,7 @@ public class Zen6Renderer {
 		int btnX = x + pw / 2 - btnsW / 2;
 		int btnY = y + 26;
 
-		String discardLabel = "DÉFAUSSER (" + discardsLeft + ")";
+		String discardLabel = "DÉFAUSSER";
 		Color dBg = canDiscard ? new Color(0x1a, 0x1a, 0x4a) : new Color(0x10, 0x10, 0x18);
 		Color dBorder = canDiscard ? new Color(0x3a, 0x3a, 0x8a) : new Color(0x1e, 0x1e, 0x2a);
 		Color dTc = canDiscard ? new Color(0x6a, 0x6a, 0xc8) : new Color(0x32, 0x32, 0x42);
