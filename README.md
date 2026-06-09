@@ -59,6 +59,7 @@ lib/
 
 * JDK 25
 * Eclipse IDE
+  
 
 ### Import
 
@@ -83,4 +84,4 @@ Un menu s'affiche :
 ## Lancer les tests
 
 1. Faire un clic droit sur le dossier `test`.
-2. Choisir **Run As > JUnit Test**.
+2. Choisir **Run As > JUnit (JUnit5) Test**.
